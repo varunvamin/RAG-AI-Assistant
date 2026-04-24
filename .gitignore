@@ -1,0 +1,32 @@
+# Environment secrets
+.env
+.env.local
+
+# Python virtual environment
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# FAISS index cache
+faiss_index/
+
+# Uploads
+uploads/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# HuggingFace model cache
+.cache/
