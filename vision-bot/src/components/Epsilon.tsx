@@ -161,52 +161,78 @@ export default function Epsilon() {
                   </button>
                 </div>
 
-                {/* Functional Study Modules */}
+                {/* Functional Study Modules (Filtered by Active Tab) */}
                 <div className="space-y-3">
-                  <div 
-                    className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
-                    onClick={() => handleSend("Read the text currently on my screen and automatically generate 5 Anki-compatible Q&A flashcards based on the key concepts.")}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Folder size={18} className="text-fuchsia-500 fill-fuchsia-500" />
-                        <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">Flashcard Generator</span>
+                  
+                  {/* STUDY TOOLS TAB */}
+                  {(activeTab === 'chat' || activeTab === 'study') && (
+                    <>
+                      <div 
+                        className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                        onClick={() => handleSend("Read the text currently on my screen and automatically generate 5 Anki-compatible Q&A flashcards based on the key concepts.")}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Folder size={18} className="text-fuchsia-500 fill-fuchsia-500" />
+                            <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">Flashcard Generator</span>
+                          </div>
+                          <MoreHorizontal size={16} className="text-gray-300" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">Auto-generate Anki-compatible flashcard Q&A pairs from the textbook on screen.</p>
                       </div>
-                      <MoreHorizontal size={16} className="text-gray-300" />
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">Auto-generate Anki-compatible flashcard Q&A pairs from the textbook on screen.</p>
-                  </div>
 
-                  <div 
-                    className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
-                    onClick={() => handleSend("Analyze the problem currently on my screen and provide a step-by-step educational solution.")}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Folder size={18} className="text-amber-400 fill-amber-400" />
-                        <span className="font-bold text-gray-800 text-sm group-hover:text-amber-500 transition-colors">Step-by-Step Solver</span>
+                      <div 
+                        className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                        onClick={() => handleSend("Analyze the problem currently on my screen and provide a step-by-step educational solution.")}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Folder size={18} className="text-amber-400 fill-amber-400" />
+                            <span className="font-bold text-gray-800 text-sm group-hover:text-amber-500 transition-colors">Step-by-Step Solver</span>
+                          </div>
+                          <MoreHorizontal size={16} className="text-gray-300" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">Breaks down complex problems into easy-to-understand educational steps.</p>
                       </div>
-                      <MoreHorizontal size={16} className="text-gray-300" />
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">Breaks down complex problems into easy-to-understand educational steps.</p>
-                  </div>
+                    </>
+                  )}
 
-                  <div 
-                    className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
-                    onClick={() => handleSend("Scan my screen for any code snippets. Explain what the code does, and identify any bugs or logic errors if they exist.")}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Folder size={18} className="text-emerald-500 fill-emerald-500" />
-                        <span className="font-bold text-gray-800 text-sm group-hover:text-emerald-500 transition-colors">Code Debugger</span>
+                  {/* CODING TAB */}
+                  {activeTab === 'code' && (
+                    <div 
+                      className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                      onClick={() => handleSend("Scan my screen for any code snippets. Explain what the code does, and identify any bugs or logic errors if they exist.")}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Folder size={18} className="text-emerald-500 fill-emerald-500" />
+                          <span className="font-bold text-gray-800 text-sm group-hover:text-emerald-500 transition-colors">Code Debugger</span>
+                        </div>
+                        <MoreHorizontal size={16} className="text-gray-300" />
                       </div>
-                      <MoreHorizontal size={16} className="text-gray-300" />
+                      <p className="text-xs text-gray-500 leading-relaxed">Scan the screen for code snippets and identify errors or explain the logic.</p>
+                      <div className="mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p className="text-[10px] font-mono text-emerald-600">def debug_code():<br/>  return "Analyzing..."</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">Scan the screen for code snippets and identify errors or explain the logic.</p>
-                    <div className="mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <p className="text-[10px] font-mono text-emerald-600">def debug_code():<br/>  return "Analyzing..."</p>
+                  )}
+
+                  {/* NOTES TAB */}
+                  {activeTab === 'image' && (
+                    <div 
+                      className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                      onClick={() => handleSend("Read the current screen and create a beautifully formatted summary of the key notes, ignoring any clutter.")}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Folder size={18} className="text-blue-500 fill-blue-500" />
+                          <span className="font-bold text-gray-800 text-sm group-hover:text-blue-500 transition-colors">Smart Summarizer</span>
+                        </div>
+                        <MoreHorizontal size={16} className="text-gray-300" />
+                      </div>
+                      <p className="text-xs text-gray-500 leading-relaxed">Extract and summarize all the important text into clean, structured notes.</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </motion.div>
