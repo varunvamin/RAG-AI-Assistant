@@ -103,7 +103,7 @@ export default function Epsilon() {
         className="w-full h-full bg-white/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
       >
         {/* ========================================================= */}
-        {/* HOME VIEW (Saved Dashboard) */}
+        {/* HOME VIEW (Study Workspace) */}
         {/* ========================================================= */}
         <AnimatePresence mode="wait">
           {view === 'home' && (
@@ -122,7 +122,7 @@ export default function Epsilon() {
                 <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                   <Menu size={18} className="text-gray-500" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Saved</h2>
+                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Study Workspace</h2>
                 <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
                    <User size={20} className="text-fuchsia-500" />
                 </div>
@@ -136,7 +136,7 @@ export default function Epsilon() {
                 {/* Search */}
                 <div className="flex items-center gap-3 bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
                   <Search size={18} className="text-gray-400" />
-                  <input placeholder="Search" className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400" />
+                  <input placeholder="Search modules..." className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400" />
                 </div>
 
                 {/* Tabs */}
@@ -145,46 +145,66 @@ export default function Epsilon() {
                     onClick={() => setActiveTab('chat')}
                     className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='chat' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Chat
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('image')}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='image' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
-                    Image
+                    Study Tools
                   </button>
                   <button 
                     onClick={() => setActiveTab('code')}
                     className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='code' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Code
+                    Coding
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('image')}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='image' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Notes
                   </button>
                 </div>
 
-                {/* Saved Items (Mocked based on reference image) */}
+                {/* Functional Study Modules */}
                 <div className="space-y-3">
-                  <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" onClick={() => setView('chat')}>
+                  <div 
+                    className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                    onClick={() => handleSend("Read the text currently on my screen and automatically generate 5 Anki-compatible Q&A flashcards based on the key concepts.")}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Folder size={18} className="text-amber-400 fill-amber-400" />
-                        <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">UI Design Analysis</span>
+                        <Folder size={18} className="text-fuchsia-500 fill-fuchsia-500" />
+                        <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">Flashcard Generator</span>
                       </div>
                       <MoreHorizontal size={16} className="text-gray-300" />
                     </div>
-                    <p className="text-xs text-gray-400 leading-relaxed">Analysis of the current screen UI elements and layout...</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">Auto-generate Anki-compatible flashcard Q&A pairs from the textbook on screen.</p>
                   </div>
 
-                  <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" onClick={() => setView('chat')}>
+                  <div 
+                    className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                    onClick={() => handleSend("Analyze the problem currently on my screen and provide a step-by-step educational solution.")}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Folder size={18} className="text-amber-400 fill-amber-400" />
-                        <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">Python Script Error</span>
+                        <span className="font-bold text-gray-800 text-sm group-hover:text-amber-500 transition-colors">Step-by-Step Solver</span>
                       </div>
                       <MoreHorizontal size={16} className="text-gray-300" />
                     </div>
-                    <p className="text-xs text-gray-400 leading-relaxed">Code indicating an error in the latest python script execution...</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">Breaks down complex problems into easy-to-understand educational steps.</p>
+                  </div>
+
+                  <div 
+                    className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                    onClick={() => handleSend("Scan my screen for any code snippets. Explain what the code does, and identify any bugs or logic errors if they exist.")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Folder size={18} className="text-emerald-500 fill-emerald-500" />
+                        <span className="font-bold text-gray-800 text-sm group-hover:text-emerald-500 transition-colors">Code Debugger</span>
+                      </div>
+                      <MoreHorizontal size={16} className="text-gray-300" />
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">Scan the screen for code snippets and identify errors or explain the logic.</p>
                     <div className="mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <p className="text-[10px] font-mono text-fuchsia-600">def calculate_matrix():<br/>  return None</p>
+                      <p className="text-[10px] font-mono text-emerald-600">def debug_code():<br/>  return "Analyzing..."</p>
                     </div>
                   </div>
                 </div>
