@@ -11,7 +11,7 @@ export default function Epsilon() {
   const [isCapturing, setIsCapturing] = useState(false);
   
   // Navigation State
-  const [view, setView] = useState<'home' | 'chat'>('home');
+  const [view, setView] = useState<'home' | 'chat' | 'bookmarks'>('home');
   const [activeTab, setActiveTab] = useState<'chat' | 'image' | 'code'>('chat');
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -393,10 +393,51 @@ export default function Epsilon() {
         </AnimatePresence>
 
         {/* ========================================================= */}
-        {/* BOTTOM NAVIGATION (Only in Home View) */}
+        {/* BOOKMARKS VIEW (Saved Items) */}
+        {/* ========================================================= */}
+        <AnimatePresence mode="wait">
+          {view === 'bookmarks' && (
+            <motion.div
+              key="bookmarks"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="flex flex-col h-full absolute inset-0 z-0 bg-gray-50/50"
+            >
+              {/* HEADER */}
+              <div 
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4"
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              >
+                <div className="w-10 h-10 flex items-center justify-center" /> {/* Spacer */}
+                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Saved Items</h2>
+                <div className="w-10 h-10 flex items-center justify-center" /> {/* Spacer */}
+              </div>
+
+              {/* CONTENT */}
+              <div 
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-4 space-y-4 scrollbar-hide z-0"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              >
+                <div className="bg-white border border-gray-100 p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-10">
+                  <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
+                    <Bookmark size={28} className="text-fuchsia-400" />
+                  </div>
+                  <h3 className="font-bold text-gray-800 text-lg mb-2">No Saved Items Yet</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    When you generate Flashcards or Notes, they will be saved here for easy export to Anki or PDF.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ========================================================= */}
+        {/* BOTTOM NAVIGATION (Only in Home or Bookmarks View) */}
         {/* ========================================================= */}
         <AnimatePresence>
-          {view === 'home' && (
+          {(view === 'home' || view === 'bookmarks') && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -416,7 +457,10 @@ export default function Epsilon() {
               >
                 <MessageCircle size={20} />
               </button>
-              <button className="p-3 text-gray-400 hover:text-gray-600 transition-all">
+              <button 
+                onClick={() => setView('bookmarks')} 
+                className={`p-3 rounded-full transition-all ${view==='bookmarks' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+              >
                 <Bookmark size={20} />
               </button>
             </motion.div>
