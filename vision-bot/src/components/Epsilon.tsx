@@ -52,26 +52,28 @@ export default function Epsilon() {
     setIsLoading(true);
 
     try {
+      let screenshot = undefined;
       const canvas = document.createElement("canvas");
-      if (videoRef.current) {
+      
+      if (videoRef.current && videoRef.current.videoWidth > 0) {
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(videoRef.current, 0, 0);
-        const screenshot = canvas.toDataURL("image/jpeg", 0.7);
+        screenshot = canvas.toDataURL("image/jpeg", 0.7);
+      }
 
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userMessage, image: screenshot, history: messages }),
-        });
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage, image: screenshot, history: messages }),
+      });
 
-        const data = await response.json();
-        if (data.reply) {
-          setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-        } else {
-          throw new Error("No reply from Neural Core.");
-        }
+      const data = await response.json();
+      if (data.reply) {
+        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      } else {
+        throw new Error("No reply from Neural Core.");
       }
     } catch (error) {
       console.error("Chat error:", error);
