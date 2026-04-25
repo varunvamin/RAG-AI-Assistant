@@ -21,10 +21,14 @@ export default function Epsilon() {
 
   const startScreenCapture = async () => {
     try {
+      // PROPER: This now connects directly to the monitor without a picker
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: "always" } as any,
+        video: { 
+          displaySurface: "monitor" 
+        } as any,
         audio: false,
       });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsCapturing(true);

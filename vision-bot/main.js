@@ -7,8 +7,7 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 450,
     height: 700,
-    x: width - 480,
-    y: height - 750,
+    center: true,             // This will put it right in the middle
     frame: false,             // Removes the Windows border
     transparent: true,        // Makes the window background clear
     alwaysOnTop: true,        // Stays above all other apps
@@ -27,6 +26,25 @@ function createWindow() {
     : `file://${path.join(__dirname, 'out/index.html')}`;
 
   mainWindow.loadURL(startUrl);
+
+  const { session, desktopCapturer } = require('electron');
+
+  // 1. Zero-Interaction Screen Picker (Always picks the first screen)
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
+      if (sources.length > 0) {
+        callback({ video: sources[0] });
+      }
+    });
+  });
+
+  // 2. Auto-Allow Permissions (No more popups)
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const autoAllow = ['display-capture', 'media', 'audioCapture', 'videoCapture'];
+    callback(autoAllow.includes(permission));
+  });
+
+
 
   // Allow clicking through the transparent parts (optional but nice)
   // mainWindow.setIgnoreMouseEvents(false);
