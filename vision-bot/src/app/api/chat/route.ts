@@ -7,7 +7,7 @@ const groq = new Groq({
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, query, history } = await req.json();
+    const { image, message } = await req.json();
 
     if (!image) {
       return NextResponse.json({ error: 'No screen capture provided' }, { status: 400 });
@@ -18,13 +18,12 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "system",
-          content: "You are a helpful study assistant. You can see the user's screen. Help them understand what they are looking at. Be concise and educational."
+          content: "You are Epsilon, a premium Cyber-Tech AI assistant. You can see the user's screen. Answer the user's question based strictly on what is visible on the screen. Be helpful, sharp, and concise."
         },
-        ...history,
         {
           role: "user",
           content: [
-            { type: "text", text: query || "What am I looking at on my screen? Explain the key concepts." },
+            { type: "text", text: message || "Analyze my current screen state." },
             {
               type: "image_url",
               image_url: {
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ 
-      answer: response.choices[0].message.content 
+      reply: response.choices[0].message.content 
     });
 
   } catch (error: any) {

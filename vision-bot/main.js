@@ -11,7 +11,7 @@ function createWindow() {
     frame: false,             // Removes the Windows border
     transparent: true,        // Makes the window background clear
     alwaysOnTop: true,        // Stays above all other apps
-    resizable: false,
+    resizable: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
