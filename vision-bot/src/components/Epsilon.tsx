@@ -175,7 +175,7 @@ export default function Epsilon() {
                 <div className="space-y-3">
                   
                   {/* STUDY TOOLS TAB */}
-                  {(activeTab === 'chat' || activeTab === 'study') && (
+                  {activeTab === 'chat' && (
                     <>
                       <div 
                         className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
@@ -464,7 +464,7 @@ export default function Epsilon() {
               </button>
               <button 
                 onClick={() => setView('chat')} 
-                className={`p-3 rounded-full transition-all ${view==='chat' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+                className="p-3 rounded-full transition-all text-gray-400 hover:text-gray-600"
               >
                 <MessageCircle size={20} />
               </button>
