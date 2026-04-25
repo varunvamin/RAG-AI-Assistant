@@ -63,7 +63,7 @@ export default function Epsilon() {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userMessage, image: screenshot }),
+          body: JSON.stringify({ message: userMessage, image: screenshot, history: messages }),
         });
 
         const data = await response.json();
