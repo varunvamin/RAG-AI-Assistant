@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal } from "lucide-react";
+import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot } from "lucide-react";
 
 export default function Epsilon() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -103,7 +103,7 @@ export default function Epsilon() {
         className="w-full h-full bg-white/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
       >
         {/* ========================================================= */}
-        {/* HOME VIEW (Study Workspace) */}
+        {/* HOME VIEW (Epsilon Dashboard) */}
         {/* ========================================================= */}
         <AnimatePresence mode="wait">
           {view === 'home' && (
@@ -122,7 +122,7 @@ export default function Epsilon() {
                 <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                   <Menu size={18} className="text-gray-500" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Study Workspace</h2>
+                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Epsilon</h2>
                 <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
                    <User size={20} className="text-fuchsia-500" />
                 </div>
@@ -130,9 +130,18 @@ export default function Epsilon() {
 
               {/* HOME CONTENT */}
               <div 
-                className="flex-1 overflow-y-auto px-6 pb-24 pt-4 space-y-6 scrollbar-hide z-0"
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0"
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
+                {/* Greeting Section */}
+                <div className="flex flex-col items-center justify-center text-center pb-2">
+                  <div className="w-20 h-20 bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 rounded-[2rem] flex items-center justify-center shadow-[0_10px_30px_rgba(217,70,239,0.3)] mb-4">
+                    <Bot size={40} className="text-white" strokeWidth={1.5} />
+                  </div>
+                  <h1 className="text-2xl font-black text-gray-900 tracking-tight">Hi there, I'm Epsilon.</h1>
+                  <p className="text-sm text-gray-500 font-medium mt-1">How can I assist you today?</p>
+                </div>
+
                 {/* Search */}
                 <div className="flex items-center gap-3 bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
                   <Search size={18} className="text-gray-400" />
