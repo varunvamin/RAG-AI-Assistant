@@ -2,22 +2,27 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, GripHorizontal } from "lucide-react";
+import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal } from "lucide-react";
 
 export default function Epsilon() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  
+  // Navigation State
+  const [view, setView] = useState<'home' | 'chat'>('home');
+  const [activeTab, setActiveTab] = useState<'chat' | 'image' | 'code'>('chat');
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll
+  // Auto-scroll chat
   useEffect(() => {
-    if (scrollRef.current) {
+    if (view === 'chat' && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, view]);
 
   // Auto-start hidden stream
   useEffect(() => {
@@ -47,6 +52,9 @@ export default function Epsilon() {
       await startScreenCapture();
     }
 
+    // Switch to chat view if not already there
+    if (view !== 'chat') setView('chat');
+
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
@@ -55,6 +63,7 @@ export default function Epsilon() {
       let screenshot = undefined;
       const canvas = document.createElement("canvas");
       
+      // Prevent crash if video is not yet fully loaded
       if (videoRef.current && videoRef.current.videoWidth > 0) {
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
@@ -91,138 +100,274 @@ export default function Epsilon() {
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        className="w-full h-full bg-white/90 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
+        className="w-full h-full bg-white/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
       >
-        {/* DRAGGABLE HEADER */}
-        <div 
-          className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0"
-          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-        >
-          <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm">
-            <Menu size={18} className="text-gray-500" />
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <h2 className="text-lg font-bold text-gray-800 tracking-tight">Epsilon</h2>
-            <div className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${isCapturing ? 'bg-green-500' : 'bg-yellow-500'}`} />
-              <p className="text-[10px] text-gray-400 font-medium tracking-wider">
-                {isCapturing ? 'Active' : 'Standby'}
-              </p>
-            </div>
-          </div>
-
-          <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
-             <User size={20} className="text-fuchsia-500" />
-          </div>
-        </div>
-
-        {/* MESSAGES AREA */}
-        <div 
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0 relative"
-          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-        >
-          {messages.length === 0 && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-center justify-center text-center mt-6"
+        {/* ========================================================= */}
+        {/* HOME VIEW (Saved Dashboard) */}
+        {/* ========================================================= */}
+        <AnimatePresence mode="wait">
+          {view === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex flex-col h-full absolute inset-0 z-0"
             >
-              <div className="w-24 h-24 bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-fuchsia-500/30 mb-6 relative">
-                <Sparkles size={40} className="text-white" />
-                <motion.div 
-                   animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                   transition={{ repeat: Infinity, duration: 3 }}
-                   className="absolute inset-0 border-4 border-fuchsia-300 rounded-full blur-sm"
-                />
+              {/* HEADER */}
+              <div 
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4"
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              >
+                <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <Menu size={18} className="text-gray-500" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Saved</h2>
+                <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
+                   <User size={20} className="text-fuchsia-500" />
+                </div>
               </div>
-              
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Epsilon</h1>
-              <p className="text-gray-500 text-sm mb-8 max-w-[80%]">
-                Your smart AI assistant. I can see your screen and help you study.
-              </p>
 
-              <div className="flex gap-3 justify-center w-full mb-8">
-                <button 
-                  onClick={() => handleSend("Analyze everything currently visible on my screen.")}
-                  className="px-5 py-2.5 bg-fuchsia-500 text-white text-xs font-bold rounded-full shadow-md shadow-fuchsia-500/20 hover:bg-fuchsia-600 transition-all flex items-center gap-2"
-                >
-                  <ScanSearch size={14} />
-                  Analyze
-                </button>
-                <button 
-                  onClick={() => handleSend("Describe the images or diagrams on my screen.")}
-                  className="px-5 py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-full border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-2"
-                >
-                  <ImageIcon size={14} />
-                  Image
-                </button>
-                <button 
-                  onClick={() => handleSend("Explain the code visible on my screen.")}
-                  className="px-5 py-2.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full border border-emerald-100 hover:bg-emerald-100 transition-all flex items-center gap-2"
-                >
-                  <Code size={14} />
-                  Code
-                </button>
+              {/* HOME CONTENT */}
+              <div 
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-4 space-y-6 scrollbar-hide z-0"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              >
+                {/* Search */}
+                <div className="flex items-center gap-3 bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
+                  <Search size={18} className="text-gray-400" />
+                  <input placeholder="Search" className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400" />
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-2 bg-gray-50 p-1 rounded-full border border-gray-100">
+                  <button 
+                    onClick={() => setActiveTab('chat')}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='chat' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Chat
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('image')}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='image' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Image
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('code')}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='code' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Code
+                  </button>
+                </div>
+
+                {/* Saved Items (Mocked based on reference image) */}
+                <div className="space-y-3">
+                  <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" onClick={() => setView('chat')}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Folder size={18} className="text-amber-400 fill-amber-400" />
+                        <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">UI Design Analysis</span>
+                      </div>
+                      <MoreHorizontal size={16} className="text-gray-300" />
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">Analysis of the current screen UI elements and layout...</p>
+                  </div>
+
+                  <div className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" onClick={() => setView('chat')}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Folder size={18} className="text-amber-400 fill-amber-400" />
+                        <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">Python Script Error</span>
+                      </div>
+                      <MoreHorizontal size={16} className="text-gray-300" />
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">Code indicating an error in the latest python script execution...</p>
+                    <div className="mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <p className="text-[10px] font-mono text-fuchsia-600">def calculate_matrix():<br/>  return None</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
-          
-          <AnimatePresence initial={false}>
-            {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[85%] p-4 text-[14px] leading-relaxed shadow-sm ${
-                    msg.role === "user"
-                      ? "bg-fuchsia-500 text-white rounded-[1.5rem] rounded-br-sm"
-                      : "bg-white border border-gray-100 text-gray-800 rounded-[1.5rem] rounded-bl-sm shadow-sm"
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-white border border-gray-100 p-4 rounded-[1.5rem] rounded-bl-sm flex gap-1.5 shadow-sm items-center h-12">
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.15 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
-                <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.3 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* FLOATING INPUT BOX */}
-        <div 
-          className="absolute bottom-6 left-6 right-6 z-20"
-          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-        >
-          <div className="flex items-center gap-2 bg-white rounded-full p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Ask me anything..."
-              className="flex-1 bg-transparent px-4 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none font-medium"
-            />
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isLoading}
-              className="w-10 h-10 bg-fuchsia-500 rounded-full flex items-center justify-center text-white shadow-md shadow-fuchsia-500/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer shrink-0"
+          {/* ========================================================= */}
+          {/* CHAT VIEW */}
+          {/* ========================================================= */}
+          {view === 'chat' && (
+            <motion.div
+              key="chat"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="flex flex-col h-full absolute inset-0 z-0"
             >
-              <Send size={16} className="-ml-0.5" />
-            </button>
-          </div>
-        </div>
+              {/* HEADER */}
+              <div 
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4"
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              >
+                <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
+                </button>
+                
+                <div className="flex flex-col items-center">
+                  <h2 className="text-lg font-bold text-gray-800 tracking-tight">AI Chat</h2>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${isCapturing ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
+                    <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">
+                      {isCapturing ? 'Vision Active' : 'Standby'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
+                   <User size={20} className="text-fuchsia-500" />
+                </div>
+              </div>
+
+              {/* MESSAGES AREA */}
+              <div 
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              >
+                {messages.length === 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex flex-col items-center justify-center text-center mt-6"
+                  >
+                    <div className="w-24 h-24 bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-fuchsia-500/30 mb-6 relative">
+                      <Sparkles size={40} className="text-white" />
+                      <motion.div 
+                         animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                         transition={{ repeat: Infinity, duration: 3 }}
+                         className="absolute inset-0 border-4 border-fuchsia-300 rounded-full blur-sm"
+                      />
+                    </div>
+                    
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to AI Chat</h1>
+                    <p className="text-gray-500 text-sm mb-8 max-w-[80%]">
+                      I can see your screen. Select a quick action or type a message below.
+                    </p>
+
+                    <div className="flex gap-2 justify-center w-full">
+                      <button 
+                        onClick={() => handleSend("Analyze everything currently visible on my screen.")}
+                        className="px-4 py-2 bg-fuchsia-50 text-fuchsia-600 text-[11px] font-bold rounded-full border border-fuchsia-100 hover:bg-fuchsia-100 transition-all flex items-center gap-1.5"
+                      >
+                        <ScanSearch size={14} />
+                        Analyze
+                      </button>
+                      <button 
+                        onClick={() => handleSend("Describe the images or diagrams on my screen.")}
+                        className="px-4 py-2 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-full border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1.5"
+                      >
+                        <ImageIcon size={14} />
+                        Image
+                      </button>
+                      <button 
+                        onClick={() => handleSend("Explain the code visible on my screen.")}
+                        className="px-4 py-2 bg-emerald-50 text-emerald-600 text-[11px] font-bold rounded-full border border-emerald-100 hover:bg-emerald-100 transition-all flex items-center gap-1.5"
+                      >
+                        <Code size={14} />
+                        Code
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+                
+                <AnimatePresence initial={false}>
+                  {messages.map((msg, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] p-4 text-[14px] leading-relaxed shadow-sm ${
+                          msg.role === "user"
+                            ? "bg-fuchsia-500 text-white rounded-[1.5rem] rounded-br-sm shadow-fuchsia-500/20"
+                            : "bg-white border border-gray-100 text-gray-800 rounded-[1.5rem] rounded-bl-sm shadow-sm"
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border border-gray-100 p-4 rounded-[1.5rem] rounded-bl-sm flex gap-1.5 shadow-sm items-center h-12">
+                      <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
+                      <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.15 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
+                      <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.3 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* FLOATING INPUT BOX (Only in Chat View) */}
+              <div 
+                className="absolute bottom-6 left-6 right-6 z-20"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              >
+                <div className="flex items-center gap-2 bg-white rounded-full p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                    placeholder="Ask me anything..."
+                    className="flex-1 bg-transparent px-4 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none font-medium"
+                  />
+                  <button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isLoading}
+                    className="w-10 h-10 bg-fuchsia-500 rounded-full flex items-center justify-center text-white shadow-md shadow-fuchsia-500/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer shrink-0"
+                  >
+                    <Send size={16} className="-ml-0.5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ========================================================= */}
+        {/* BOTTOM NAVIGATION (Only in Home View) */}
+        {/* ========================================================= */}
+        <AnimatePresence>
+          {view === 'home' && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-20" 
+              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            >
+              <button 
+                onClick={() => setView('home')} 
+                className={`p-3 rounded-full transition-all ${view==='home' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <Home size={20} />
+              </button>
+              <button 
+                onClick={() => setView('chat')} 
+                className={`p-3 rounded-full transition-all ${view==='chat' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <MessageCircle size={20} />
+              </button>
+              <button className="p-3 text-gray-400 hover:text-gray-600 transition-all">
+                <Bookmark size={20} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </motion.div>
     </div>
   );
