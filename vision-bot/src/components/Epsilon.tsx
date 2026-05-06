@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X } from "lucide-react";
+import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff } from "lucide-react";
 
 export default function Epsilon() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -17,6 +17,10 @@ export default function Epsilon() {
   
   // New Feature States
   const [mode, setMode] = useState<'general' | 'flashcard' | 'solver' | 'coder'>('general');
+  const [threads, setThreads] = useState<Record<string, { role: string; content: string }[]>>({
+    general: [], flashcard: [], solver: [], coder: []
+  });
+  const [useVision, setUseVision] = useState(false);
   const [savedItems, setSavedItems] = useState<{ role: string; content: string }[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -30,7 +34,7 @@ export default function Epsilon() {
     if (view === 'chat' && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading, view]);
+  }, [threads, isLoading, view, mode]);
 
   // Auto-start hidden stream
   useEffect(() => {
@@ -56,7 +60,9 @@ export default function Epsilon() {
     const userMessage = customMessage || input;
     if (!userMessage.trim() || isLoading) return;
 
-    if (!isCapturing) {
+    const currentMode = customMode || mode;
+
+    if (useVision && !isCapturing) {
       await startScreenCapture();
     }
 
@@ -64,15 +70,18 @@ export default function Epsilon() {
     if (view !== 'chat') setView('chat');
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setThreads((prev) => ({
+      ...prev,
+      [currentMode]: [...(prev[currentMode] || []), { role: "user", content: userMessage }]
+    }));
     setIsLoading(true);
 
     try {
       let screenshot = undefined;
-      const canvas = document.createElement("canvas");
       
       // Prevent crash if video is not yet fully loaded
-      if (videoRef.current && videoRef.current.videoWidth > 0) {
+      if (useVision && videoRef.current && videoRef.current.videoWidth > 0) {
+        const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
         const ctx = canvas.getContext("2d");
@@ -80,22 +89,27 @@ export default function Epsilon() {
         screenshot = canvas.toDataURL("image/jpeg", 0.7);
       }
 
-      const currentMode = customMode || mode;
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, image: screenshot, history: messages, mode: currentMode }),
+        body: JSON.stringify({ message: userMessage, image: screenshot, history: threads[currentMode] || [], mode: currentMode }),
       });
 
       const data = await response.json();
       if (data.reply) {
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+        setThreads((prev) => ({
+          ...prev,
+          [currentMode]: [...(prev[currentMode] || []), { role: "assistant", content: data.reply }]
+        }));
       } else {
         throw new Error("No reply from Neural Core.");
       }
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Oops! I couldn't process the screen frame." }]);
+      setThreads((prev) => ({
+        ...prev,
+        [currentMode]: [...(prev[currentMode] || []), { role: "assistant", content: "Oops! I couldn't process the request." }]
+      }));
     } finally {
       setIsLoading(false);
     }
@@ -219,7 +233,7 @@ export default function Epsilon() {
                   </button>
                   <button 
                     onClick={() => setView('notes')}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${view==='notes' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                    className="flex-1 py-2 rounded-full text-xs font-bold transition-all text-gray-500 hover:text-gray-700"
                   >
                     Notes
                   </button>
@@ -235,7 +249,7 @@ export default function Epsilon() {
                         className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
                         onClick={() => {
                           setMode('flashcard');
-                          handleSend("Read the text currently on my screen and automatically generate 5 Anki-compatible Q&A flashcards based on the key concepts.", 'flashcard');
+                          setView('chat');
                         }}
                       >
                         <div className="flex items-center justify-between">
@@ -252,7 +266,7 @@ export default function Epsilon() {
                         className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
                         onClick={() => {
                           setMode('solver');
-                          handleSend("Analyze the problem currently on my screen and provide a step-by-step educational solution.", 'solver');
+                          setView('chat');
                         }}
                       >
                         <div className="flex items-center justify-between">
@@ -273,7 +287,7 @@ export default function Epsilon() {
                       className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
                       onClick={() => {
                         setMode('coder');
-                        handleSend("Scan my screen for any code snippets. Explain what the code does, and identify any bugs or logic errors if they exist.", 'coder');
+                        setView('chat');
                       }}
                     >
                       <div className="flex items-center justify-between">
@@ -322,7 +336,9 @@ export default function Epsilon() {
                 </div>
                 
                 <div className="flex flex-col items-center">
-                  <h2 className="text-lg font-bold text-gray-800 tracking-tight">AI Chat</h2>
+                  <h2 className="text-lg font-bold text-gray-800 tracking-tight">
+                    {mode === 'coder' ? 'Code Debugger Chat' : mode === 'solver' ? 'Step-by-Step Solver' : mode === 'flashcard' ? 'Flashcard Generator' : 'AI Chat'}
+                  </h2>
                   <div className="flex items-center gap-1.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${isCapturing ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
                     <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">
@@ -342,7 +358,7 @@ export default function Epsilon() {
                 className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0"
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
-                {messages.length === 0 && (
+                {(!threads[mode] || threads[mode].length === 0) && (
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -390,7 +406,7 @@ export default function Epsilon() {
                 )}
                 
                 <AnimatePresence initial={false}>
-                  {messages.map((msg, i) => (
+                  {(threads[mode] || []).map((msg, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -447,6 +463,13 @@ export default function Epsilon() {
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
                 <div className="flex items-center gap-2 bg-white rounded-full p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100">
+                  <button
+                    onClick={() => setUseVision(!useVision)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${useVision ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                    title={useVision ? "Vision: ON" : "Vision: OFF"}
+                  >
+                    {useVision ? <Monitor size={16} /> : <MonitorOff size={16} />}
+                  </button>
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -653,15 +676,28 @@ export default function Epsilon() {
                     <X size={16} />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                  {messages.length === 0 ? (
+                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                  {Object.entries(threads).every(([_, msgs]) => msgs.length === 0) ? (
                     <p className="text-xs text-gray-400 text-center mt-4">No chat history yet.</p>
                   ) : (
-                    messages.filter(m => m.role === 'user').map((msg, idx) => (
-                      <div key={idx} className="text-[13px] font-medium text-gray-600 truncate p-3 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100">
-                        {msg.content}
-                      </div>
-                    ))
+                    Object.entries(threads).map(([tMode, msgs]) => {
+                      if (msgs.length === 0) return null;
+                      const title = tMode === 'coder' ? 'Code Debugger' : tMode === 'solver' ? 'Step-by-Step Solver' : tMode === 'flashcard' ? 'Flashcards' : 'General Chat';
+                      return (
+                        <div key={tMode} className="space-y-2">
+                          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">{title}</h3>
+                          {msgs.filter(m => m.role === 'user').map((msg, idx) => (
+                            <div 
+                              key={idx} 
+                              onClick={() => { setMode(tMode as any); setView('chat'); setIsSidebarOpen(false); }}
+                              className="text-[13px] font-medium text-gray-600 truncate p-3 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
+                            >
+                              {msg.content}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })
                   )}
                 </div>
               </motion.div>
