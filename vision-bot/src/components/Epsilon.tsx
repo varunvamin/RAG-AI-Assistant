@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot } from "lucide-react";
+import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X } from "lucide-react";
 
 export default function Epsilon() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -12,8 +12,15 @@ export default function Epsilon() {
   const [isCapturing, setIsCapturing] = useState(false);
   
   // Navigation State
-  const [view, setView] = useState<'home' | 'chat' | 'bookmarks'>('home');
+  const [view, setView] = useState<'home' | 'chat' | 'bookmarks' | 'notes'>('home');
   const [activeTab, setActiveTab] = useState<'chat' | 'image' | 'code'>('chat');
+  
+  // New Feature States
+  const [mode, setMode] = useState<'general' | 'flashcard' | 'solver' | 'coder'>('general');
+  const [savedItems, setSavedItems] = useState<{ role: string; content: string }[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [notesUrl, setNotesUrl] = useState("");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -45,7 +52,7 @@ export default function Epsilon() {
     }
   };
 
-  const handleSend = async (customMessage?: string) => {
+  const handleSend = async (customMessage?: string, customMode?: 'general' | 'flashcard' | 'solver' | 'coder') => {
     const userMessage = customMessage || input;
     if (!userMessage.trim() || isLoading) return;
 
@@ -73,10 +80,11 @@ export default function Epsilon() {
         screenshot = canvas.toDataURL("image/jpeg", 0.7);
       }
 
+      const currentMode = customMode || mode;
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, image: screenshot, history: messages }),
+        body: JSON.stringify({ message: userMessage, image: screenshot, history: messages, mode: currentMode }),
       });
 
       const data = await response.json();
@@ -90,6 +98,52 @@ export default function Epsilon() {
       setMessages((prev) => [...prev, { role: "assistant", content: "Oops! I couldn't process the screen frame." }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSave = (msg: { role: string; content: string }) => {
+    setSavedItems((prev) => [...prev, msg]);
+  };
+
+  const generatePDF = async () => {
+    if (!notesUrl.trim() || pdfLoading) return;
+    setPdfLoading(true);
+    try {
+      const response = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: notesUrl }),
+      });
+      const data = await response.json();
+      if (data.summary) {
+        // Dynamically import html2pdf so it doesn't break SSR
+        const html2pdf = (await import('html2pdf.js')).default;
+        
+        // Create a hidden div to format the PDF content
+        const element = document.createElement('div');
+        element.innerHTML = `
+          <div style="font-family: Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6;">
+            <h1 style="color: #d946ef; border-bottom: 2px solid #fdf4ff; padding-bottom: 10px;">Epsilon Notes</h1>
+            <p style="color: #888; font-size: 12px; margin-bottom: 30px;">Source: ${notesUrl}</p>
+            <div style="font-size: 14px;">${data.summary.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+          </div>
+        `;
+        
+        const opt = {
+          margin: 10,
+          filename: 'Epsilon_Notes.pdf',
+          image: { type: 'jpeg' as const, quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+        };
+        
+        html2pdf().set(opt).from(element).save();
+      }
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+    } finally {
+      setPdfLoading(false);
+      setNotesUrl("");
     }
   };
 
@@ -164,8 +218,8 @@ export default function Epsilon() {
                     Coding
                   </button>
                   <button 
-                    onClick={() => setActiveTab('image')}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='image' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setView('notes')}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${view==='notes' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Notes
                   </button>
@@ -179,7 +233,10 @@ export default function Epsilon() {
                     <>
                       <div 
                         className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
-                        onClick={() => handleSend("Read the text currently on my screen and automatically generate 5 Anki-compatible Q&A flashcards based on the key concepts.")}
+                        onClick={() => {
+                          setMode('flashcard');
+                          handleSend("Read the text currently on my screen and automatically generate 5 Anki-compatible Q&A flashcards based on the key concepts.", 'flashcard');
+                        }}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -193,7 +250,10 @@ export default function Epsilon() {
 
                       <div 
                         className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
-                        onClick={() => handleSend("Analyze the problem currently on my screen and provide a step-by-step educational solution.")}
+                        onClick={() => {
+                          setMode('solver');
+                          handleSend("Analyze the problem currently on my screen and provide a step-by-step educational solution.", 'solver');
+                        }}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -211,7 +271,10 @@ export default function Epsilon() {
                   {activeTab === 'code' && (
                     <div 
                       className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
-                      onClick={() => handleSend("Scan my screen for any code snippets. Explain what the code does, and identify any bugs or logic errors if they exist.")}
+                      onClick={() => {
+                        setMode('coder');
+                        handleSend("Scan my screen for any code snippets. Explain what the code does, and identify any bugs or logic errors if they exist.", 'coder');
+                      }}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -227,22 +290,7 @@ export default function Epsilon() {
                     </div>
                   )}
 
-                  {/* NOTES TAB */}
-                  {activeTab === 'image' && (
-                    <div 
-                      className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
-                      onClick={() => handleSend("Read the current screen and create a beautifully formatted summary of the key notes, ignoring any clutter.")}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Folder size={18} className="text-blue-500 fill-blue-500" />
-                          <span className="font-bold text-gray-800 text-sm group-hover:text-blue-500 transition-colors">Smart Summarizer</span>
-                        </div>
-                        <MoreHorizontal size={16} className="text-gray-300" />
-                      </div>
-                      <p className="text-xs text-gray-500 leading-relaxed">Extract and summarize all the important text into clean, structured notes.</p>
-                    </div>
-                  )}
+                  {/* NOTE: We removed the notes tab quick action here since Notes is now a full view */}
                 </div>
               </div>
             </motion.div>
@@ -264,9 +312,14 @@ export default function Epsilon() {
                 className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4"
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
               >
-                <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                  <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
-                </button>
+                <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
+                    <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
+                  </button>
+                  <button onClick={() => setIsSidebarOpen(true)} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
+                    <PanelLeft size={18} className="text-gray-500" />
+                  </button>
+                </div>
                 
                 <div className="flex flex-col items-center">
                   <h2 className="text-lg font-bold text-gray-800 tracking-tight">AI Chat</h2>
@@ -278,7 +331,7 @@ export default function Epsilon() {
                   </div>
                 </div>
 
-                <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                    <User size={20} className="text-fuchsia-500" />
                 </div>
               </div>
@@ -344,24 +397,35 @@ export default function Epsilon() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      <div
-                        className={`max-w-[85%] p-4 text-[14px] leading-relaxed shadow-sm ${
-                          msg.role === "user"
-                            ? "bg-fuchsia-500 text-white rounded-[1.5rem] rounded-br-sm shadow-fuchsia-500/20"
-                            : "bg-white border border-gray-100 text-gray-800 rounded-[1.5rem] rounded-bl-sm shadow-sm"
-                        }`}
-                      >
-                        <ReactMarkdown 
-                          components={{
-                            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                            ul: ({node, ...props}) => <ul className="list-disc ml-5 mb-2 space-y-1" {...props} />,
-                            ol: ({node, ...props}) => <ol className="list-decimal ml-5 mb-2 space-y-1" {...props} />,
-                            li: ({node, ...props}) => <li className="pl-1" {...props} />,
-                            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-                          }}
+                      <div className={`flex flex-col gap-1.5 ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                        <div
+                          className={`max-w-[85%] p-4 text-[14px] leading-relaxed shadow-sm ${
+                            msg.role === "user"
+                              ? "bg-fuchsia-500 text-white rounded-[1.5rem] rounded-br-sm shadow-fuchsia-500/20"
+                              : "bg-white border border-gray-100 text-gray-800 rounded-[1.5rem] rounded-bl-sm shadow-sm"
+                          }`}
                         >
-                          {msg.content}
-                        </ReactMarkdown>
+                          <ReactMarkdown 
+                            components={{
+                              p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                              ul: ({node, ...props}) => <ul className="list-disc ml-5 mb-2 space-y-1" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal ml-5 mb-2 space-y-1" {...props} />,
+                              li: ({node, ...props}) => <li className="pl-1" {...props} />,
+                              strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                        {msg.role === 'assistant' && (
+                          <button 
+                            onClick={() => handleSave(msg)} 
+                            className="text-gray-400 hover:text-fuchsia-500 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold ml-2"
+                            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                          >
+                            <Save size={12} /> Save
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -430,14 +494,102 @@ export default function Epsilon() {
                 className="flex-1 overflow-y-auto px-6 pb-24 pt-4 space-y-4 scrollbar-hide z-0"
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
-                <div className="bg-white border border-gray-100 p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-10">
-                  <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
-                    <Bookmark size={28} className="text-fuchsia-400" />
+                {savedItems.length === 0 ? (
+                  <div className="bg-white border border-gray-100 p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-10">
+                    <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
+                      <Bookmark size={28} className="text-fuchsia-400" />
+                    </div>
+                    <h3 className="font-bold text-gray-800 text-lg mb-2">No Saved Items Yet</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                      When you generate Flashcards or Notes, they will be saved here for easy export to Anki or PDF.
+                    </p>
                   </div>
-                  <h3 className="font-bold text-gray-800 text-lg mb-2">No Saved Items Yet</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    When you generate Flashcards or Notes, they will be saved here for easy export to Anki or PDF.
-                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {savedItems.map((item, idx) => (
+                      <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <ReactMarkdown 
+                          components={{
+                            p: ({node, ...props}) => <p className="mb-2 last:mb-0 text-sm text-gray-700" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc ml-5 mb-2 space-y-1 text-sm text-gray-700" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                          }}
+                        >
+                          {item.content}
+                        </ReactMarkdown>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ========================================================= */}
+        {/* NOTES VIEW (URL to PDF Summarizer) */}
+        {/* ========================================================= */}
+        <AnimatePresence mode="wait">
+          {view === 'notes' && (
+            <motion.div
+              key="notes"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="flex flex-col h-full absolute inset-0 z-0 bg-white"
+            >
+              {/* HEADER */}
+              <div 
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4"
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              >
+                <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
+                </button>
+                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Smart Notes Engine</h2>
+                <div className="w-10 h-10 flex items-center justify-center" />
+              </div>
+
+              {/* CONTENT */}
+              <div 
+                className="flex-1 flex flex-col items-center justify-center px-8 pb-32 z-0"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              >
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-8 transform -rotate-6">
+                  <FileText size={48} className="text-white" strokeWidth={1.5} />
+                </div>
+                
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-3 text-center">Transform links into PDFs</h1>
+                <p className="text-sm text-gray-500 font-medium mb-10 text-center max-w-sm">
+                  Paste any website or video URL. I will read the contents, extract key topics, and generate a professional PDF.
+                </p>
+
+                <div className="w-full max-w-md bg-white border-2 border-indigo-100 rounded-2xl p-2 flex flex-col shadow-xl shadow-indigo-100/50">
+                  <div className="flex items-center gap-3 px-4 py-2 border-b border-indigo-50 mb-2">
+                    <Search size={18} className="text-indigo-400" />
+                    <input 
+                      value={notesUrl}
+                      onChange={(e) => setNotesUrl(e.target.value)}
+                      placeholder="Paste link here (e.g., https://en.wikipedia...)" 
+                      className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400 font-medium" 
+                    />
+                  </div>
+                  <button 
+                    onClick={generatePDF}
+                    disabled={!notesUrl.trim() || pdfLoading}
+                    className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-300 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-500/20"
+                  >
+                    {pdfLoading ? (
+                      <>
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={18} /> Generate Detailed PDF
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -475,6 +627,45 @@ export default function Epsilon() {
                 <Bookmark size={20} />
               </button>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ========================================================= */}
+        {/* CHAT HISTORY SIDEBAR */}
+        {/* ========================================================= */}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <>
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/20 z-40 backdrop-blur-sm"
+                onClick={() => setIsSidebarOpen(false)}
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              />
+              <motion.div
+                initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="absolute top-0 left-0 h-full w-64 bg-white/95 backdrop-blur-xl shadow-2xl z-50 flex flex-col border-r border-gray-100"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              >
+                <div className="p-4 h-20 flex items-center justify-between border-b border-gray-100/50 mt-2">
+                  <h2 className="font-bold text-gray-800 text-lg">History</h2>
+                  <button onClick={() => setIsSidebarOpen(false)} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition-colors">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                  {messages.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center mt-4">No chat history yet.</p>
+                  ) : (
+                    messages.filter(m => m.role === 'user').map((msg, idx) => (
+                      <div key={idx} className="text-[13px] font-medium text-gray-600 truncate p-3 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100">
+                        {msg.content}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
 
