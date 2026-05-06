@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff } from "lucide-react";
+import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff, Paperclip } from "lucide-react";
 
 export default function Epsilon() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -25,6 +25,11 @@ export default function Epsilon() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [notesUrl, setNotesUrl] = useState("");
+  
+  // Input Bar States
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [showActionMenu, setShowActionMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -56,13 +61,13 @@ export default function Epsilon() {
     }
   };
 
-  const handleSend = async (customMessage?: string, customMode?: 'general' | 'flashcard' | 'solver' | 'coder') => {
+  const handleSend = async (customMessage?: string, customMode?: 'general' | 'flashcard' | 'solver' | 'coder', forceCapture: boolean = false) => {
     const userMessage = customMessage || input;
     if (!userMessage.trim() || isLoading) return;
 
     const currentMode = customMode || mode;
 
-    if (useVision && !isCapturing) {
+    if (forceCapture && !isCapturing) {
       await startScreenCapture();
     }
 
@@ -79,8 +84,10 @@ export default function Epsilon() {
     try {
       let screenshot = undefined;
       
-      // Prevent crash if video is not yet fully loaded
-      if (useVision && videoRef.current && videoRef.current.videoWidth > 0) {
+      if (attachedImage) {
+        screenshot = attachedImage;
+        setAttachedImage(null);
+      } else if (forceCapture && videoRef.current && videoRef.current.videoWidth > 0) {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
@@ -115,8 +122,22 @@ export default function Epsilon() {
     }
   };
 
-  const handleSave = (msg: { role: string; content: string }) => {
-    setSavedItems((prev) => [...prev, msg]);
+  const handleSaveChat = () => {
+    const currentChat = threads[mode];
+    if (!currentChat || currentChat.length === 0) return;
+    const chatContent = currentChat.map(msg => `**${msg.role === 'user' ? 'You' : 'Epsilon'}**: ${msg.content}`).join('\n\n');
+    setSavedItems((prev) => [...prev, { role: 'system', content: `### Saved ${mode.toUpperCase()} Chat\n\n${chatContent}` }]);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachedImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const generatePDF = async () => {
@@ -347,8 +368,13 @@ export default function Epsilon() {
                   </div>
                 </div>
 
-                <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                   <User size={20} className="text-fuchsia-500" />
+                <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <button onClick={handleSaveChat} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
+                    <Save size={18} className="text-gray-500" />
+                  </button>
+                  <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
+                     <User size={20} className="text-fuchsia-500" />
+                  </div>
                 </div>
               </div>
 
@@ -433,15 +459,6 @@ export default function Epsilon() {
                             {msg.content}
                           </ReactMarkdown>
                         </div>
-                        {msg.role === 'assistant' && (
-                          <button 
-                            onClick={() => handleSave(msg)} 
-                            className="text-gray-400 hover:text-fuchsia-500 transition-colors flex items-center gap-1 text-[10px] uppercase font-bold ml-2"
-                            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-                          >
-                            <Save size={12} /> Save
-                          </button>
-                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -459,27 +476,59 @@ export default function Epsilon() {
 
               {/* FLOATING INPUT BOX (Only in Chat View) */}
               <div 
-                className="absolute bottom-6 left-6 right-6 z-20"
+                className="absolute bottom-6 left-6 right-6 z-20 flex flex-col gap-2"
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
-                <div className="flex items-center gap-2 bg-white rounded-full p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100">
-                  <button
-                    onClick={() => setUseVision(!useVision)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${useVision ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                    title={useVision ? "Vision: ON" : "Vision: OFF"}
-                  >
-                    {useVision ? <Monitor size={16} /> : <MonitorOff size={16} />}
+                {attachedImage && (
+                  <div className="relative self-start ml-2">
+                    <img src={attachedImage} alt="Attachment" className="h-16 w-16 object-cover rounded-xl border-2 border-fuchsia-500 shadow-md" />
+                    <button onClick={() => setAttachedImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-sm">
+                      <X size={10} strokeWidth={3} />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 bg-white rounded-[2rem] p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 relative">
+                  
+                  {/* File Upload Button */}
+                  <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors shrink-0">
+                    <Paperclip size={18} />
                   </button>
+                  <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+
+                  {/* Sparkles Context Menu */}
+                  <div className="relative shrink-0">
+                    <button onClick={() => setShowActionMenu(!showActionMenu)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${showActionMenu ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-fuchsia-50 text-fuchsia-500 hover:bg-fuchsia-100'}`}>
+                      <Sparkles size={18} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {showActionMenu && (
+                        <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute bottom-14 left-0 w-52 bg-white border border-gray-100 shadow-xl rounded-2xl p-2 z-50 flex flex-col gap-1">
+                          <button onClick={() => { setShowActionMenu(false); handleSend("Please analyze the current screen in detail.", mode, true); }} className="flex items-center gap-3 p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-left text-xs font-bold text-gray-700 transition-colors">
+                             <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center"><Monitor size={14} className="text-blue-500" /></div> Analyze Screen
+                          </button>
+                          <button onClick={() => { setShowActionMenu(false); handleSend("Extract all text from the screen and summarize it.", mode, true); }} className="flex items-center gap-3 p-2 hover:bg-orange-50 hover:text-orange-600 rounded-xl text-left text-xs font-bold text-gray-700 transition-colors">
+                             <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center"><FileText size={14} className="text-orange-500" /></div> Summarize Screen
+                          </button>
+                          <button onClick={() => { setShowActionMenu(false); handleSend("Find any code on screen and explain its logic or fix errors.", mode, true); }} className="flex items-center gap-3 p-2 hover:bg-emerald-50 hover:text-emerald-600 rounded-xl text-left text-xs font-bold text-gray-700 transition-colors">
+                             <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center"><Code size={14} className="text-emerald-500" /></div> Explain Code
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Ask me anything..."
-                    className="flex-1 bg-transparent px-4 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none font-medium"
+                    className="flex-1 bg-transparent px-2 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none font-medium"
                   />
                   <button
                     onClick={() => handleSend()}
-                    disabled={!input.trim() || isLoading}
+                    disabled={(!input.trim() && !attachedImage) || isLoading}
                     className="w-10 h-10 bg-fuchsia-500 rounded-full flex items-center justify-center text-white shadow-md shadow-fuchsia-500/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer shrink-0"
                   >
                     <Send size={16} className="-ml-0.5" />
