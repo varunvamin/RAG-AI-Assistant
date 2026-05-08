@@ -21,7 +21,8 @@ export default function Epsilon() {
     general: [], flashcard: [], solver: [], coder: []
   });
   const [useVision, setUseVision] = useState(false);
-  const [savedItems, setSavedItems] = useState<{ role: string; content: string }[]>([]);
+  const [savedItems, setSavedItems] = useState<{ id: string; title: string; category: string; content: string }[]>([]);
+  const [expandedBookmarkId, setExpandedBookmarkId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [notesUrl, setNotesUrl] = useState("");
@@ -125,8 +126,19 @@ export default function Epsilon() {
   const handleSaveChat = () => {
     const currentChat = threads[mode];
     if (!currentChat || currentChat.length === 0) return;
+    
+    // Generate a title from the first user message
+    const firstUserMsg = currentChat.find(m => m.role === 'user')?.content || "Untitled Chat";
+    const title = firstUserMsg.length > 40 ? firstUserMsg.substring(0, 40) + '...' : firstUserMsg;
+    
     const chatContent = currentChat.map(msg => `**${msg.role === 'user' ? 'You' : 'Epsilon'}**: ${msg.content}`).join('\n\n');
-    setSavedItems((prev) => [...prev, { role: 'system', content: `### Saved ${mode.toUpperCase()} Chat\n\n${chatContent}` }]);
+    
+    setSavedItems((prev) => [...prev, { 
+      id: Date.now().toString(), 
+      title, 
+      category: mode, 
+      content: chatContent 
+    }]);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -578,17 +590,43 @@ export default function Epsilon() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {savedItems.map((item, idx) => (
-                      <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <ReactMarkdown 
-                          components={{
-                            p: ({node, ...props}) => <p className="mb-2 last:mb-0 text-sm text-gray-700" {...props} />,
-                            ul: ({node, ...props}) => <ul className="list-disc ml-5 mb-2 space-y-1 text-sm text-gray-700" {...props} />,
-                            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-                          }}
+                    {savedItems.map((item) => (
+                      <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all">
+                        <div 
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => setExpandedBookmarkId(expandedBookmarkId === item.id ? null : item.id)}
                         >
-                          {item.content}
-                        </ReactMarkdown>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-fuchsia-500 uppercase tracking-wider mb-1">{item.category}</span>
+                            <span className="text-sm font-bold text-gray-800">{item.title}</span>
+                          </div>
+                          <div className={`w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center transition-transform ${expandedBookmarkId === item.id ? 'rotate-180' : ''}`}>
+                            <ChevronLeft size={16} className="text-gray-400 -rotate-90" />
+                          </div>
+                        </div>
+                        
+                        <AnimatePresence>
+                          {expandedBookmarkId === item.id && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="border-t border-gray-100"
+                            >
+                              <div className="p-5 bg-gray-50/50">
+                                <ReactMarkdown 
+                                  components={{
+                                    p: ({node, ...props}) => <p className="mb-2 last:mb-0 text-sm text-gray-700" {...props} />,
+                                    ul: ({node, ...props}) => <ul className="list-disc ml-5 mb-2 space-y-1 text-sm text-gray-700" {...props} />,
+                                    strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                                  }}
+                                >
+                                  {item.content}
+                                </ReactMarkdown>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     ))}
                   </div>
