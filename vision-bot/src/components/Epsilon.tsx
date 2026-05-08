@@ -68,7 +68,7 @@ export default function Epsilon() {
 
     const currentMode = customMode || mode;
 
-    if (!isCapturing) {
+    if ((useVision || forceCapture) && !isCapturing) {
       await startScreenCapture();
     }
 
@@ -88,7 +88,7 @@ export default function Epsilon() {
       if (attachedImage) {
         screenshot = attachedImage;
         setAttachedImage(null);
-      } else if (videoRef.current && videoRef.current.videoWidth > 0) {
+      } else if ((useVision || forceCapture) && videoRef.current && videoRef.current.videoWidth > 0) {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
@@ -530,6 +530,15 @@ export default function Epsilon() {
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* Vision Toggle Button */}
+                  <button
+                    onClick={() => setUseVision(!useVision)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${useVision ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                    title={useVision ? "Vision: ON" : "Vision: OFF"}
+                  >
+                    {useVision ? <Monitor size={16} /> : <MonitorOff size={16} />}
+                  </button>
 
                   <input
                     value={input}
