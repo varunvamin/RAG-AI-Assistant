@@ -68,7 +68,7 @@ export default function Epsilon() {
 
     const currentMode = customMode || mode;
 
-    if (forceCapture && !isCapturing) {
+    if (!isCapturing) {
       await startScreenCapture();
     }
 
@@ -88,7 +88,7 @@ export default function Epsilon() {
       if (attachedImage) {
         screenshot = attachedImage;
         setAttachedImage(null);
-      } else if (forceCapture && videoRef.current && videoRef.current.videoWidth > 0) {
+      } else if (videoRef.current && videoRef.current.videoWidth > 0) {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
