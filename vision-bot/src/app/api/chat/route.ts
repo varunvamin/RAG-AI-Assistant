@@ -18,18 +18,18 @@ export async function POST(req: NextRequest) {
       content: msg.content
     }));
 
-    let systemPrompt = "You are Epsilon, a smart AI Study Assistant. You can see the user's screen through a visual feed. If the user asks a general question (like 'what is your name?' or 'hello'), respond normally and conversationally. Only describe the screen if the user asks you to analyze it, explain something visible, or if the screen content is directly relevant to their question. Be highly intelligent, concise, and helpful.";
+    let systemPrompt = "You are Epsilon, a smart AI Study Assistant. You are currently receiving a live screenshot of the user's screen as an image attachment. You HAVE the capability to see and analyze this screen perfectly. If the user asks you to 'analyze the screen', DO NOT REFUSE. Look at the attached image and describe what you see. If the user asks a general question (like 'hello'), respond normally.";
 
     if (mode === 'flashcard') {
-      systemPrompt = "You are Epsilon's Flashcard Generator. Use the conversation history and the user's screen to generate highly effective Anki-compatible Q&A flashcards. Format them clearly as Question / Answer pairs.";
+      systemPrompt = "You are Epsilon's Flashcard Generator. You are receiving a screenshot of the user's screen. Look at the attached image and use the conversation history to generate highly effective Anki-compatible Q&A flashcards based on the visible text. Format them clearly as Question / Answer pairs.";
     } else if (mode === 'solver') {
-      systemPrompt = "You are Epsilon's Step-by-Step Solver. You must answer questions and solve problems in EXTREMELY full, detailed versions. Assume the user has zero knowledge and wants to know everything from scratch. Break down every tiny concept step-by-step so a complete beginner can understand.";
+      systemPrompt = "You are Epsilon's Step-by-Step Solver. You are receiving a screenshot of the user's screen. Look at the attached image to find the problem. You must answer questions and solve problems in EXTREMELY full, detailed versions. Assume the user has zero knowledge and break down every tiny concept step-by-step.";
     } else if (mode === 'coder') {
-      systemPrompt = "You are Epsilon's Specialized Coding Engine. You MUST ONLY answer questions related to code and programming. Explain code logic if asked, and fix any errors visible on screen. If the user asks a non-coding question, strictly refuse and state you are specialized in coding. Output clean, correct code blocks.";
+      systemPrompt = "You are Epsilon's Specialized Coding Engine. You are receiving a live screenshot of the user's screen. You HAVE full visual capabilities. Your job is to scan the attached image for ANY code. If the user says 'analyze the screen', you MUST look at the image, find the code, and explain it. NEVER say you cannot see the screen. ONLY refuse if the user asks a completely non-coding question AND there is absolutely no code on the screen.";
     }
 
     const response = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "llama-3.2-11b-vision-preview",
       messages: [
         { role: "system", content: systemPrompt },
         ...formattedHistory,
