@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff, Paperclip } from "lucide-react";
+import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff, Paperclip, Plus } from "lucide-react";
 
 export default function Epsilon() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -24,6 +24,7 @@ export default function Epsilon() {
   const [savedItems, setSavedItems] = useState<{ id: string; title: string; category: string; content: string }[]>([]);
   const [expandedBookmarkId, setExpandedBookmarkId] = useState<string | null>(null);
   const [threadTitles, setThreadTitles] = useState<Record<string, string>>({});
+  const [pastChats, setPastChats] = useState<{ id: string; title: string; category: string; messages: { role: string; content: string }[] }[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -137,6 +138,47 @@ export default function Epsilon() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNewChat = () => {
+    if (threads[mode] && threads[mode].length > 0) {
+      setPastChats(prev => [...prev, {
+        id: Date.now().toString(),
+        title: threadTitles[mode] || threads[mode].find(m => m.role === 'user')?.content.substring(0, 30) + '...' || "Untitled Chat",
+        category: mode,
+        messages: threads[mode]
+      }]);
+    }
+    setThreads(prev => ({ ...prev, [mode]: [] }));
+    setThreadTitles(prev => {
+      const copy = { ...prev };
+      delete copy[mode];
+      return copy;
+    });
+  };
+
+  const loadPastChat = (chatId: string) => {
+    const chatToLoad = pastChats.find(c => c.id === chatId);
+    if (!chatToLoad) return;
+    
+    if (threads[mode] && threads[mode].length > 0) {
+      setPastChats(prev => [
+        ...prev.filter(c => c.id !== chatId),
+        {
+          id: Date.now().toString(),
+          title: threadTitles[mode] || threads[mode].find(m => m.role === 'user')?.content.substring(0, 30) + '...' || "Untitled Chat",
+          category: mode,
+          messages: threads[mode]
+        }
+      ]);
+    } else {
+      setPastChats(prev => prev.filter(c => c.id !== chatId));
+    }
+    
+    setMode(chatToLoad.category as any);
+    setThreads(prev => ({ ...prev, [chatToLoad.category]: chatToLoad.messages }));
+    setThreadTitles(prev => ({ ...prev, [chatToLoad.category]: chatToLoad.title }));
+    setIsSidebarOpen(false);
   };
 
   const handleSaveChat = async () => {
@@ -410,6 +452,9 @@ export default function Epsilon() {
                 </div>
 
                 <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <button onClick={handleNewChat} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
+                    <Plus size={18} className="text-gray-500" />
+                  </button>
                   <button onClick={handleSaveChat} disabled={isSaving} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50">
                     {isSaving ? (
                       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full" />
@@ -806,26 +851,48 @@ export default function Epsilon() {
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                  {Object.entries(threads).every(([_, msgs]) => msgs.length === 0) ? (
-                    <p className="text-xs text-gray-400 text-center mt-4">No chat history yet.</p>
-                  ) : (
-                    Object.entries(threads).map(([tMode, msgs]) => {
-                      if (msgs.length === 0) return null;
-                      const titleCategory = tMode === 'coder' ? 'Code Debugger' : tMode === 'solver' ? 'Step-by-Step Solver' : tMode === 'flashcard' ? 'Flashcards' : 'General Chat';
-                      const chatTitle = threadTitles[tMode] || msgs.find(m => m.role === 'user')?.content.substring(0, 30) + '...';
+                  {(() => {
+                    const modes = ['general', 'flashcard', 'solver', 'coder'];
+                    const hasAnyChats = modes.some(m => (threads[m] && threads[m].length > 0) || pastChats.some(c => c.category === m));
+                    
+                    if (!hasAnyChats) {
+                      return <p className="text-xs text-gray-400 text-center mt-4">No chat history yet.</p>;
+                    }
+
+                    return modes.map(m => {
+                      const activeMsgs = threads[m] || [];
+                      const pastForMode = pastChats.filter(c => c.category === m);
+                      if (activeMsgs.length === 0 && pastForMode.length === 0) return null;
+                      
+                      const titleCategory = m === 'coder' ? 'Code Debugger' : m === 'solver' ? 'Step-by-Step Solver' : m === 'flashcard' ? 'Flashcards' : 'General Chat';
+                      const activeTitle = threadTitles[m] || (activeMsgs.length > 0 ? activeMsgs.find(x => x.role === 'user')?.content.substring(0, 30) + '...' : '');
+
                       return (
-                        <div key={tMode} className="space-y-1">
+                        <div key={m} className="space-y-1 mb-4">
                           <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">{titleCategory}</h3>
-                          <div 
-                            onClick={() => { setMode(tMode as any); setView('chat'); setIsSidebarOpen(false); }}
-                            className="text-[13px] font-bold text-gray-700 truncate p-3 bg-gray-50 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
-                          >
-                            {chatTitle}
-                          </div>
+                          
+                          {activeMsgs.length > 0 && (
+                            <div 
+                              onClick={() => { setMode(m as any); setView('chat'); setIsSidebarOpen(false); }}
+                              className="text-[13px] font-bold text-fuchsia-600 truncate p-3 bg-fuchsia-50/50 hover:bg-fuchsia-100 rounded-xl cursor-pointer transition-colors border border-fuchsia-200"
+                            >
+                              {activeTitle} (Active)
+                            </div>
+                          )}
+                          
+                          {pastForMode.map(pastChat => (
+                            <div 
+                              key={pastChat.id}
+                              onClick={() => loadPastChat(pastChat.id)}
+                              className="text-[13px] font-medium text-gray-600 truncate p-3 bg-gray-50 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
+                            >
+                              {pastChat.title}
+                            </div>
+                          ))}
                         </div>
-                      )
-                    })
-                  )}
+                      );
+                    });
+                  })()}
                 </div>
               </motion.div>
             </>
