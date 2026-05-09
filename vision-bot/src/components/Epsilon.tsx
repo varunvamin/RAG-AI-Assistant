@@ -86,17 +86,6 @@ export default function Epsilon() {
       [currentMode]: [...(prev[currentMode] || []), { role: "user", content: userMessage }]
     }));
     
-    // Background title generation for Sidebar History
-    if (isFirstMessage) {
-      fetch("/api/title", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history: [{ role: "user", content: userMessage }] }),
-      }).then(res => res.json()).then(data => {
-        if (data.title) setThreadTitles(prev => ({ ...prev, [currentMode]: data.title }));
-      }).catch(console.error);
-    }
-    
     setIsLoading(true);
 
     try {
@@ -126,6 +115,16 @@ export default function Epsilon() {
           ...prev,
           [currentMode]: [...(prev[currentMode] || []), { role: "assistant", content: data.reply }]
         }));
+        
+        if (isFirstMessage) {
+          fetch("/api/title", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ history: [{ role: "user", content: userMessage }, { role: "assistant", content: data.reply }] }),
+          }).then(res => res.json()).then(titleData => {
+            if (titleData.title) setThreadTitles(prev => ({ ...prev, [currentMode]: titleData.title }));
+          }).catch(console.error);
+        }
       } else {
         throw new Error("No reply from Neural Core.");
       }
