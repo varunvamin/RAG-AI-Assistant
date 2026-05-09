@@ -28,14 +28,14 @@ export async function POST(req: NextRequest) {
       } else if (mode === 'solver') {
         systemPrompt = "You are Epsilon's Step-by-Step Solver. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Look only at the background apps to find the problem. You must answer questions and solve problems in EXTREMELY full, detailed versions. Assume the user has zero knowledge and break down every tiny concept step-by-step.";
       } else if (mode === 'coder') {
-        systemPrompt = "You are Epsilon's Specialized Coding Engine. You HAVE full visual capabilities. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Your job is to scan the background apps for ANY code. If the user says 'analyze the screen', you MUST look at the background, find the code, and explain it. NEVER say you cannot see the screen.";
+        systemPrompt = "You are Epsilon's Specialized Coding Engine. You HAVE full visual capabilities. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Your job is to scan the background apps for ANY code. If the user says 'analyze the screen', you MUST look at the background, find the code, and explain it. NEVER say you cannot see the screen. CRITICAL RULE: If there is absolutely no code visible in the background, AND the user's question is not related to programming, you MUST politely refuse to answer and ask the user to switch to the 'General Chat' or 'Study Tools' section.";
       }
     } else {
       systemPrompt += " The user has NOT provided an image or screenshot. If the user asks you to analyze the screen, explain the code, or look at something, you MUST politely inform them that your 'Vision' toggle is turned off, and they need to turn it on (the monitor icon) to share their screen with you. Otherwise, just answer their text-based query normally.";
       
       if (mode === 'flashcard') systemPrompt += " You are the Flashcard Generator. Answer text questions normally.";
       if (mode === 'solver') systemPrompt += " You are the Step-by-Step Solver. Solve text problems step-by-step.";
-      if (mode === 'coder') systemPrompt += " You are the Code Debugger. Answer text-based coding questions normally.";
+      if (mode === 'coder') systemPrompt += " You are the Code Debugger. CRITICAL RULE: You MUST ONLY answer text questions related to code and programming. If the user asks a non-coding question, politely refuse and ask them to switch to the 'General Chat' or 'Study Tools' section.";
     }
 
     const response = await groq.chat.completions.create({
