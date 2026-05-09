@@ -123,15 +123,26 @@ export default function Epsilon() {
     }
   };
 
-  const handleSaveChat = () => {
+  const handleSaveChat = async () => {
     const currentChat = threads[mode];
     if (!currentChat || currentChat.length === 0) return;
     
-    // Generate a title from the first user message
-    const firstUserMsg = currentChat.find(m => m.role === 'user')?.content || "Untitled Chat";
-    const title = firstUserMsg.length > 40 ? firstUserMsg.substring(0, 40) + '...' : firstUserMsg;
-    
     const chatContent = currentChat.map(msg => `**${msg.role === 'user' ? 'You' : 'Epsilon'}**: ${msg.content}`).join('\n\n');
+    
+    // Fallback title
+    let title = currentChat.find(m => m.role === 'user')?.content.substring(0, 30) + '...' || "Saved Chat";
+
+    try {
+      const res = await fetch("/api/title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history: currentChat }),
+      });
+      const data = await res.json();
+      if (data.title) title = data.title;
+    } catch (e) {
+      console.error("Failed to generate title:", e);
+    }
     
     setSavedItems((prev) => [...prev, { 
       id: Date.now().toString(), 

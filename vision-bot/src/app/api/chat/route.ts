@@ -18,14 +18,24 @@ export async function POST(req: NextRequest) {
       content: msg.content
     }));
 
-    let systemPrompt = "You are Epsilon, a smart AI Study Assistant. You are currently receiving a live screenshot of the user's screen as an image attachment. You HAVE the capability to see and analyze this screen perfectly. If the user asks you to 'analyze the screen', DO NOT REFUSE. Look at the attached image and describe what you see. If the user asks a general question (like 'hello'), respond normally.";
+    let systemPrompt = "You are Epsilon, a smart AI Study Assistant.";
 
-    if (mode === 'flashcard') {
-      systemPrompt = "You are Epsilon's Flashcard Generator. You are receiving a screenshot of the user's screen. Look at the attached image and use the conversation history to generate highly effective Anki-compatible Q&A flashcards based on the visible text. Format them clearly as Question / Answer pairs.";
-    } else if (mode === 'solver') {
-      systemPrompt = "You are Epsilon's Step-by-Step Solver. You are receiving a screenshot of the user's screen. Look at the attached image to find the problem. You must answer questions and solve problems in EXTREMELY full, detailed versions. Assume the user has zero knowledge and break down every tiny concept step-by-step.";
-    } else if (mode === 'coder') {
-      systemPrompt = "You are Epsilon's Specialized Coding Engine. You are receiving a live screenshot of the user's screen. You HAVE full visual capabilities. Your job is to scan the attached image for ANY code. If the user says 'analyze the screen', you MUST look at the image, find the code, and explain it. NEVER say you cannot see the screen. ONLY refuse if the user asks a completely non-coding question AND there is absolutely no code on the screen.";
+    if (image) {
+      systemPrompt += " You are currently receiving a live screenshot of the user's screen as an image attachment. You HAVE the capability to see and analyze this screen perfectly. If the user asks you to 'analyze the screen', DO NOT REFUSE. Look at the attached image and describe what you see. If the user asks a general question (like 'hello'), respond normally.";
+      
+      if (mode === 'flashcard') {
+        systemPrompt = "You are Epsilon's Flashcard Generator. You are receiving a screenshot of the user's screen. Look at the attached image and use the conversation history to generate highly effective Anki-compatible Q&A flashcards based on the visible text. Format them clearly as Question / Answer pairs.";
+      } else if (mode === 'solver') {
+        systemPrompt = "You are Epsilon's Step-by-Step Solver. You are receiving a screenshot of the user's screen. Look at the attached image to find the problem. You must answer questions and solve problems in EXTREMELY full, detailed versions. Assume the user has zero knowledge and break down every tiny concept step-by-step.";
+      } else if (mode === 'coder') {
+        systemPrompt = "You are Epsilon's Specialized Coding Engine. You are receiving a live screenshot of the user's screen. You HAVE full visual capabilities. Your job is to scan the attached image for ANY code. If the user says 'analyze the screen', you MUST look at the image, find the code, and explain it. NEVER say you cannot see the screen. ONLY refuse if the user asks a completely non-coding question AND there is absolutely no code on the screen.";
+      }
+    } else {
+      systemPrompt += " The user has NOT provided an image or screenshot. If the user asks you to analyze the screen, explain the code, or look at something, you MUST politely inform them that your 'Vision' toggle is turned off, and they need to turn it on (the monitor icon) to share their screen with you. Otherwise, just answer their text-based query normally.";
+      
+      if (mode === 'flashcard') systemPrompt += " You are the Flashcard Generator. Answer text questions normally.";
+      if (mode === 'solver') systemPrompt += " You are the Step-by-Step Solver. Solve text problems step-by-step.";
+      if (mode === 'coder') systemPrompt += " You are the Code Debugger. Answer text-based coding questions normally.";
     }
 
     const response = await groq.chat.completions.create({

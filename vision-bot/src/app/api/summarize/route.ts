@@ -18,15 +18,28 @@ export async function POST(req: NextRequest) {
     let extractedText = "";
     try {
       const response = await fetch('https://r.jina.ai/' + url, {
-        headers: {
-          'X-Return-Format': 'markdown'
-        }
+        headers: { 'X-Return-Format': 'markdown' }
       });
       extractedText = await response.text();
-      extractedText = extractedText.substring(0, 15000); // Allow large context up to 15k chars
+      
+      // Check if Jina got blocked (e.g., share.google links)
+      if (extractedText.includes("SecurityCompromiseError") || extractedText.includes("Anonymous access to domain") || extractedText.includes("DDoS attack")) {
+        throw new Error("Jina blocked by target domain");
+      }
+      extractedText = extractedText.substring(0, 15000);
     } catch (e) {
-      console.error("Jina extraction error:", e);
-      extractedText = `The user provided this link: ${url}. Please provide a general highly detailed professional overview of what this link likely contains.`;
+      console.warn("Jina extraction failed, falling back to Cheerio:", e);
+      try {
+        const fallbackRes = await fetch(url);
+        const html = await fallbackRes.text();
+        const $ = cheerio.load(html);
+        $('script, style, nav, footer, iframe').remove();
+        extractedText = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 10000);
+        if (!extractedText || extractedText.length < 50) throw new Error("Cheerio extracted empty body");
+      } catch (fallbackError) {
+        console.warn("Cheerio fallback failed:", fallbackError);
+        extractedText = `The user provided this link: ${url}. The content could not be directly scraped. Please provide a general highly detailed professional overview of what this link likely contains based on the URL.`;
+      }
     }
 
     const systemPrompt = "You are a professional research AI. The user has provided text extracted directly from a website or YouTube video. Generate a highly detailed, beautifully formatted Professional PDF Summary of the content. Cover every important topic, extract key insights, use bullet points, headers, and clear structure.";
