@@ -23,6 +23,8 @@ export default function Epsilon() {
   const [useVision, setUseVision] = useState(false);
   const [savedItems, setSavedItems] = useState<{ id: string; title: string; category: string; content: string }[]>([]);
   const [expandedBookmarkId, setExpandedBookmarkId] = useState<string | null>(null);
+  const [threadTitles, setThreadTitles] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [notesUrl, setNotesUrl] = useState("");
@@ -75,11 +77,25 @@ export default function Epsilon() {
     // Switch to chat view if not already there
     if (view !== 'chat') setView('chat');
 
+    const isFirstMessage = !threads[currentMode] || threads[currentMode].length === 0;
+
     setInput("");
     setThreads((prev) => ({
       ...prev,
       [currentMode]: [...(prev[currentMode] || []), { role: "user", content: userMessage }]
     }));
+    
+    // Background title generation for Sidebar History
+    if (isFirstMessage) {
+      fetch("/api/title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history: [{ role: "user", content: userMessage }] }),
+      }).then(res => res.json()).then(data => {
+        if (data.title) setThreadTitles(prev => ({ ...prev, [currentMode]: data.title }));
+      }).catch(console.error);
+    }
+    
     setIsLoading(true);
 
     try {
@@ -125,8 +141,9 @@ export default function Epsilon() {
 
   const handleSaveChat = async () => {
     const currentChat = threads[mode];
-    if (!currentChat || currentChat.length === 0) return;
+    if (!currentChat || currentChat.length === 0 || isSaving) return;
     
+    setIsSaving(true);
     const chatContent = currentChat.map(msg => `**${msg.role === 'user' ? 'You' : 'Epsilon'}**: ${msg.content}`).join('\n\n');
     
     // Fallback title
@@ -150,6 +167,7 @@ export default function Epsilon() {
       category: mode, 
       content: chatContent 
     }]);
+    setIsSaving(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -392,8 +410,12 @@ export default function Epsilon() {
                 </div>
 
                 <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                  <button onClick={handleSaveChat} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
-                    <Save size={18} className="text-gray-500" />
+                  <button onClick={handleSaveChat} disabled={isSaving} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50">
+                    {isSaving ? (
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full" />
+                    ) : (
+                      <Save size={18} className="text-gray-500" />
+                    )}
                   </button>
                   <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
                      <User size={20} className="text-fuchsia-500" />
@@ -789,19 +811,17 @@ export default function Epsilon() {
                   ) : (
                     Object.entries(threads).map(([tMode, msgs]) => {
                       if (msgs.length === 0) return null;
-                      const title = tMode === 'coder' ? 'Code Debugger' : tMode === 'solver' ? 'Step-by-Step Solver' : tMode === 'flashcard' ? 'Flashcards' : 'General Chat';
+                      const titleCategory = tMode === 'coder' ? 'Code Debugger' : tMode === 'solver' ? 'Step-by-Step Solver' : tMode === 'flashcard' ? 'Flashcards' : 'General Chat';
+                      const chatTitle = threadTitles[tMode] || msgs.find(m => m.role === 'user')?.content.substring(0, 30) + '...';
                       return (
-                        <div key={tMode} className="space-y-2">
-                          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">{title}</h3>
-                          {msgs.filter(m => m.role === 'user').map((msg, idx) => (
-                            <div 
-                              key={idx} 
-                              onClick={() => { setMode(tMode as any); setView('chat'); setIsSidebarOpen(false); }}
-                              className="text-[13px] font-medium text-gray-600 truncate p-3 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
-                            >
-                              {msg.content}
-                            </div>
-                          ))}
+                        <div key={tMode} className="space-y-1">
+                          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">{titleCategory}</h3>
+                          <div 
+                            onClick={() => { setMode(tMode as any); setView('chat'); setIsSidebarOpen(false); }}
+                            className="text-[13px] font-bold text-gray-700 truncate p-3 bg-gray-50 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
+                          >
+                            {chatTitle}
+                          </div>
                         </div>
                       )
                     })
