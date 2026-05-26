@@ -33,6 +33,8 @@ Epsilon operates seamlessly across your system, analyzing your active workspace 
 
 ### 1. 🖥️ Epsilon Desktop Vision Client (Next.js + Electron)
 A sleek, glassmorphic floating screen companion that sits on top of your workspace:
+* **🔑 Local Multi-User Accounts**: Register and log into any number of offline-secured profiles. Epsilon isolates all active chats, histories, thread titles, and bookmarks dynamically under each username in LocalStorage, preventing user profile crossovers.
+* **🎙️ Live Meeting Audio Solver**: Integrates continuous background transcribing of meeting speaker audio in real-time. Features a glowing recording equalizer panel and automatically solves spoken questions when the speaker pauses for 2 seconds.
 * **Live Screen-Sharing Vision**: Scans background apps, browsers, and text-books at a single click. (Automatically ignores its own chat window to analyze only target material!)
 * **Specialized Code Debugger**: Detects programming layouts instantly. Politely rejects unrelated prompts and instructs the user to switch to General or Solver tools.
 * **Step-by-Step Solver**: Breaks down visual equations, diagrams, and educational text into granular, zero-knowledge steps.
