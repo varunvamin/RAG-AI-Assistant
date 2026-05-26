@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const systemPrompt = "You are a professional research AI. The user has provided text extracted directly from a website or YouTube video. Generate a highly detailed, beautifully formatted Professional PDF Summary of the content. Cover every important topic, extract key insights, use bullet points, headers, and clear structure.";
+    const systemPrompt = "You are a professional research AI. The user has provided text extracted directly from a website or YouTube video. Generate a highly detailed, beautifully formatted Professional PDF Summary of the content. You MUST return your response as a valid JSON object with exactly three keys: 'title' (a short, catchy, descriptive academic title for the PDF, maximum 5-6 words), 'overview' (a concise 2-3 sentence executive summary explaining the main core focus of the content), and 'summary' (a beautifully structured, highly detailed notes summary covering every important topic, using clear markdown subheadings (like ## and ###), bullet points, and key terms).";
 
     const response = await groq.chat.completions.create({
       model: "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -54,9 +54,28 @@ export async function POST(req: NextRequest) {
         },
       ],
       max_tokens: 4000,
+      response_format: { type: "json_object" }
     });
 
-    return NextResponse.json({ summary: response.choices[0].message.content });
+    const rawContent = response.choices[0].message.content || '{}';
+    let title = "Epsilon Notes Summary";
+    let overview = "Detailed summary generated from the provided web link.";
+    let summary = rawContent;
+
+    try {
+      const parsed = JSON.parse(rawContent);
+      title = parsed.title || "Epsilon Notes Summary";
+      overview = parsed.overview || "Detailed summary generated from the provided web link.";
+      summary = parsed.summary || rawContent;
+    } catch (e) {
+      console.warn("JSON parsing failed, extracting from text fallback:", e);
+      const titleMatch = rawContent.match(/^#+\s*(.*)/m);
+      if (titleMatch) {
+        title = titleMatch[1];
+      }
+    }
+
+    return NextResponse.json({ title, overview, summary });
   } catch (error: any) {
     console.error('Summarize API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

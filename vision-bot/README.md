@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🖥️ Epsilon Desktop Vision Client
 
-## Getting Started
+This is the Next.js + Electron companion desktop application for the Epsilon AI Study Suite. It provides a sleek, semi-transparent overlay window that runs directly on your desktop, enabling visual context-awareness, coding acceleration, step-by-step math solving, interactive 3D studying, and smart PDF generation.
 
-First, run the development server:
+---
 
+## 🚀 Features
+
+* **Visual Intelligence**: Real-time monitor-screen captures with dedicated context exclusion (ignores the Epsilon GUI to scan background active windows).
+* **3D Flashcard Studier**: Loads conversation histories (active & past) and compiles them into elegant double-sided cards that flip with premium 3D CSS animations.
+* **Professional PDF Generator**: Turns internet references and video transcripts into stunning academic publications, matching high-end graphic design templates.
+* **Specialized Code Debugger**: Strictly monitors background code, explains logics, and politely redirects general questions.
+
+---
+
+## 🛠️ Development & Startup
+
+To run the application locally on your system, execute the following commands in your shell:
+
+### 1. Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure Local Keys
+Create a `.env.local` file in this directory and populate it with your key:
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Launch the Application (Next.js + Electron)
+Boot up both the Next.js local host server and the Electron shell wrapper concurrently:
+```bash
+npm run dev:electron
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Alternatively, to run the Next.js web application standalone in your default browser, run:
+```bash
+npm run dev
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📦 Build & Package
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To bundle and compile Epsilon as a standalone desktop executable (`.exe` for Windows, etc.), run:
+```bash
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🔒 Environment Security
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Your private credentials are safe:
+* **`.env.local`** is strictly added to the [.gitignore](.gitignore) configuration. It will **never** be indexed, staged, or pushed to remote repositories like GitHub.
+* Build caches (`.next/`), OS-specific noise (`.DS_Store`), and dependency directories (`node_modules/`) are securely blacklisted.

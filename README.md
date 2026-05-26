@@ -1,121 +1,120 @@
-# 📚 RAG-Powered Study Assistant
+# 🎓 Epsilon: RAG-Powered AI Study Assistant & Desktop Vision Companion
 
-A full retrieval-augmented generation (RAG) pipeline — upload any PDF textbook, chunk & embed it with `sentence-transformers`, store vectors in FAISS, and chat with it via Groq's free LLaMA 3.3 70B API.
+Epsilon is a state-of-the-art academic suite combining a robust, high-performance Retrieval-Augmented Generation (RAG) backend web portal with an advanced, floating Next.js + Electron desktop vision assistant. 
 
-**Bonus:** Auto-generate Anki-compatible flashcards from your study material!
-
-![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-FF4B4B?logo=streamlit&logoColor=white)
-![LangChain](https://img.shields.io/badge/LangChain-0.3+-green)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+Epsilon operates seamlessly across your system, analyzing your active workspace or browser tabs, explaining complex code, breaking down equations step-by-step, generating 3D-interactive flashcard decks, and compiling website references into beautiful, publication-grade academic PDFs.
 
 ---
 
-## 🏗️ Architecture
+## 🏛️ Ecosystem Architecture
 
 ```
-PDF Upload → PyMuPDF (text extraction)
-           → LangChain (chunking, 1000 chars / 200 overlap)
-           → sentence-transformers (all-MiniLM-L6-v2 embeddings)
-           → FAISS (vector indexing)
-
-User Question → Embed query
-              → FAISS similarity search (top-4 chunks)
-              → LangChain ConversationalRetrievalChain
-              → Groq API (LLaMA 3.3 70B)
-              → Answer + Source Citations
+                                  [ THE EPSILON SUITE ]
+                                            │
+               ┌────────────────────────────┴────────────────────────────┐
+               ▼                                                         ▼
+    [ Streamlit Portal ]                                       [ Epsilon Desktop Client ]
+ (Python RAG Web Interface)                                   (Next.js + Electron Overlay)
+               │                                                         │
+   PDF Upload & Extraction (PyMuPDF)                             Real-time Screen Capture
+               │                                                         │
+   Text Chunking & Tokenization (LangChain)                     Specialized AI Engines:
+               │                                                  ├─ Coder (Strict Code Inspector)
+   Local Embeddings (sentence-transformers)                       ├─ Solver (Step-by-Step Breakdown)
+               │                                                  ├─ Notes Engine (PDF Synthesizer)
+   High-performance Vector DB (FAISS)                             └─ 3D Flashcard Generator
+               │                                                         │
+   Free LLaMA-based RAG Inference                               Groq Cloud LLaMA Vision API
 ```
-
-## 🚀 Quick Start
-
-### 1. Clone & Install
-
-```bash
-git clone https://github.com/YOUR_USERNAME/rag-study-assistant.git
-cd rag-study-assistant
-pip install -r requirements.txt
-```
-
-### 2. Get a Groq API Key (Free)
-
-1. Go to [console.groq.com](https://console.groq.com)
-2. Sign up (no credit card required)
-3. Create an API key
-
-### 3. Set Up Environment
-
-```bash
-cp .env.example .env
-# Edit .env and paste your Groq API key
-```
-
-Or enter it directly in the app's sidebar.
-
-### 4. Run the App
-
-```bash
-streamlit run app.py
-```
-
-The app will open at `http://localhost:8501`.
 
 ---
 
-## 🎯 Features
+## 🚀 Key Features
 
-| Feature | Description |
-|---------|-------------|
-| 📄 **PDF Upload** | Upload any PDF textbook (up to 50MB) |
-| 💬 **Chat Interface** | Ask questions in natural language with multi-turn memory |
-| 📖 **Source Citations** | See which pages the answer came from |
-| 📝 **Flashcard Generator** | Auto-generate Anki-compatible Q&A flashcards |
-| ⬇️ **CSV Export** | Download flashcards as semicolon-delimited CSV for Anki |
-| 🎨 **Premium Dark UI** | Sleek dark theme with custom styling |
+### 1. 🖥️ Epsilon Desktop Vision Client (Next.js + Electron)
+A sleek, glassmorphic floating screen companion that sits on top of your workspace:
+* **Live Screen-Sharing Vision**: Scans background apps, browsers, and text-books at a single click. (Automatically ignores its own chat window to analyze only target material!)
+* **Specialized Code Debugger**: Detects programming layouts instantly. Politely rejects unrelated prompts and instructs the user to switch to General or Solver tools.
+* **Step-by-Step Solver**: Breaks down visual equations, diagrams, and educational text into granular, zero-knowledge steps.
+* **Smart Notes Engine (URL to PDF)**: Takes any web page or video transcript, summarizes it, dynamically names it according to content, and designs a magazine-quality academic PDF document.
+* **3D Flashcard Generator**: Select any conversation session from your history to automatically compile a high-performance interactive deck of flashcards with standard 3D flip transitions and direct Anki-desktop exports.
 
----
-
-## 🛠️ Tech Stack
-
-| Tool | Purpose | Why It's Free |
-|------|---------|---------------|
-| **Groq API** | LLM inference (LLaMA 3.3 70B) | Free tier: ~1000 req/day |
-| **FAISS** | Vector similarity search | Fully open-source, runs locally |
-| **sentence-transformers** | Text embeddings | Open-source, runs locally |
-| **PyMuPDF** | PDF text extraction | Open-source |
-| **LangChain** | RAG orchestration | Open-source |
-| **Streamlit** | Web UI + free hosting | Community Cloud is free |
+### 2. 📚 RAG Portal & Textbook Search (Streamlit + Python)
+A dedicated Web-UI for indexing large PDF textbooks:
+* **Vector Indexing**: Employs locally computed `sentence-transformers` embeddings (using the `all-MiniLM-L6-v2` model).
+* **FAISS Vector DB**: Conducts millisecond similarity queries across thousands of textbook pages.
+* **Conversational Memory**: Holds multi-turn dialogs with citation references mapping back to exact source pages.
 
 ---
 
-## ☁️ Deploy to Streamlit Community Cloud
+## 📂 Repository Structure
 
-1. Push your code to a **public GitHub repository**
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub repo and select `app.py`
-4. Add your `GROQ_API_KEY` in **Settings → Secrets**:
-   ```toml
-   GROQ_API_KEY = "your_key_here"
+```
+├── vision-bot/              # Next.js + Electron Desktop Client (Epsilon Companion)
+│   ├── src/
+│   │   ├── app/             # Next.js App router & API routes
+│   │   └── components/      # UI components (Epsilon, Lumina, VisionBot)
+│   ├── main.js              # Electron window configuration
+│   ├── package.json         # Desktop dependencies (Next.js, Electron, html2pdf.js)
+│   └── tailwind.config.ts   # UI Theme styling
+│
+├── app.py                   # Streamlit RAG Portal Entrypoint
+├── rag_pipeline.py          # Core FAISS + sentence-transformers retrieval pipeline
+├── flashcard_generator.py   # Python-based material card compiler
+├── requirements.txt         # Python library list
+├── .env.example             # Environment config template
+└── README.md                # This file
+```
+
+---
+
+## ⚙️ Setup & Installation
+
+### Prerequisite: API Key
+Obtain a free high-speed API Key from the [Groq Console](https://console.groq.com).
+
+### Running the RAG Portal (Python Backend)
+1. Initialize the Python environment:
+   ```bash
+   pip install -r requirements.txt
    ```
-5. Click **Deploy**!
+2. Set up your environment variables:
+   ```bash
+   cp .env.example .env
+   # Open .env and insert your GROQ_API_KEY
+   ```
+3. Boot the portal:
+   ```bash
+   streamlit run app.py
+   ```
+
+### Running Epsilon Desktop Client (Electron Companion)
+1. Navigate to the desktop client folder:
+   ```bash
+   cd vision-bot
+   npm install
+   ```
+2. Set up client-specific variables:
+   ```bash
+   cp .env.local.example .env.local
+   # Insert your GROQ_API_KEY inside .env.local
+   ```
+3. Run the development server (runs Next.js & launches Electron window concurrently):
+   ```bash
+   npm run dev:electron
+   ```
 
 ---
 
-## 📁 Project Structure
+## 🔒 Security Notice: Risky & Environment Files
+To safeguard your private credentials, API keys, and temporary environment data:
+1. **Never commit `.env` or `.env.local` files**: These contain sensitive keys (`GROQ_API_KEY`). If pushed publicly to GitHub, crawlers will scrape them, resulting in API exploitation and potential charges.
+2. **Proper `.gitignore` configuration**: The project's `.gitignore` rules explicitly include `.env*` to make sure environment configuration files are automatically skipped from being indexed or pushed.
+3. **Local dependencies and cache exclusion**: Build directories (`.next`, `build`), Node scripts (`node_modules`), and temporary storage folders are correctly blacklisted in git tracking.
 
-```
-├── app.py                  # Main Streamlit application
-├── rag_pipeline.py         # Core RAG logic
-├── flashcard_generator.py  # Anki flashcard generation & export
-├── requirements.txt        # Python dependencies
-├── .env.example            # Environment variable template
-├── .gitignore              # Git ignore rules
-├── .streamlit/
-│   └── config.toml         # Streamlit theme configuration
-└── README.md               # This file
-```
+Always use `.env.example` as a template for other developers to populate their keys locally!
 
 ---
 
 ## 📋 License
-
-MIT License — feel free to use, modify, and distribute.
+This project is licensed under the MIT License. Feel free to modify and build upon this premium study tool!

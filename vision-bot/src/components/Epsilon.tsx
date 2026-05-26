@@ -12,7 +12,7 @@ export default function Epsilon() {
   const [isCapturing, setIsCapturing] = useState(false);
   
   // Navigation State
-  const [view, setView] = useState<'home' | 'chat' | 'bookmarks' | 'notes'>('home');
+  const [view, setView] = useState<'home' | 'chat' | 'bookmarks' | 'notes' | 'flashcards'>('home');
   const [activeTab, setActiveTab] = useState<'chat' | 'image' | 'code'>('chat');
   
   // New Feature States
@@ -29,6 +29,14 @@ export default function Epsilon() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [notesUrl, setNotesUrl] = useState("");
+  
+  // Flashcard Generation States
+  const [generatingFlashcards, setGeneratingFlashcards] = useState(false);
+  const [flashcardsDeck, setFlashcardsDeck] = useState<{ question: string; answer: string }[]>([]);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [selectedChatTitle, setSelectedChatTitle] = useState("");
+  const [successFeedback, setSuccessFeedback] = useState("");
   
   // Input Bar States
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
@@ -233,24 +241,130 @@ export default function Epsilon() {
       });
       const data = await response.json();
       if (data.summary) {
+        const title = data.title || "Epsilon Notes Summary";
+        const overview = data.overview || "Detailed academic summary generated from reference material.";
+        
         // Dynamically import html2pdf so it doesn't break SSR
         const html2pdf = (await import('html2pdf.js')).default;
         
         // Create a hidden div to format the PDF content
         const element = document.createElement('div');
+        
+        // Build a robust and premium markdown-to-HTML formatter
+        const formatMarkdownToHTML = (markdown: string) => {
+          let html = markdown;
+          
+          // Replace headers
+          html = html.replace(/^##\s+(.*)$/gmi, '<h2 style="color: #0F4C5C; font-size: 16px; font-weight: 700; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px; margin-top: 24px; margin-bottom: 12px; page-break-after: avoid; font-family: \'Helvetica Neue\', Arial, sans-serif;">$1</h2>');
+          html = html.replace(/^###\s+(.*)$/gmi, '<h3 style="color: #1A8099; font-size: 13px; font-weight: 600; margin-top: 18px; margin-bottom: 8px; font-family: \'Helvetica Neue\', Arial, sans-serif;">$1</h3>');
+          
+          // Replace bold text
+          html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #0F4C5C; font-weight: 700;">$1</strong>');
+          
+          // Handle blockquotes
+          html = html.replace(/^\>\s+(.*)$/gmi, '<div style="background-color: #F7FAFC; border-left: 4px solid #C5A880; padding: 12px 20px; margin: 16px 0; border-radius: 4px; font-style: italic; color: #4A5568;">$1</div>');
+          
+          // Custom parsing for bullet points to make them look absolutely amazing
+          const lines = html.split('\n');
+          let insideList = false;
+          const processedLines = lines.map(line => {
+            const trimmed = line.trim();
+            const listMatch = trimmed.match(/^[-*+]\s+(.*)/);
+            
+            if (listMatch) {
+              let itemContent = listMatch[1];
+              let output = '';
+              if (!insideList) {
+                insideList = true;
+                output += '<ul style="padding: 0; margin: 12px 0 16px 0;">';
+              }
+              output += `
+                <li style="margin-bottom: 8px; font-size: 12.5px; color: #4A5568; line-height: 1.6; list-style-type: none; position: relative; padding-left: 20px; font-family: \'Helvetica Neue\', Arial, sans-serif;">
+                  <span style="position: absolute; left: 0; top: 6px; width: 6px; height: 6px; background-color: #1A8099; border-radius: 50%;"></span>
+                  ${itemContent}
+                </li>`;
+              return output;
+            } else {
+              let output = '';
+              if (insideList) {
+                insideList = false;
+                output += '</ul>';
+              }
+              if (trimmed.length > 0 && !trimmed.startsWith('<h') && !trimmed.startsWith('<div') && !trimmed.startsWith('<ul') && !trimmed.startsWith('<li')) {
+                output += `<p style="font-size: 12.5px; color: #2D3748; line-height: 1.7; margin-bottom: 14px; font-family: \'Helvetica Neue\', Arial, sans-serif;">${trimmed}</p>`;
+              } else {
+                output += trimmed;
+              }
+              return output;
+            }
+          });
+          
+          let finalHtml = processedLines.join('');
+          if (insideList) {
+            finalHtml += '</ul>';
+          }
+          return finalHtml;
+        };
+        
+        const formattedContent = formatMarkdownToHTML(data.summary);
+        
+        // Construct the magazine-style PDF page layout matching Claude's designs
         element.innerHTML = `
-          <div style="font-family: Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6;">
-            <h1 style="color: #d946ef; border-bottom: 2px solid #fdf4ff; padding-bottom: 10px;">Epsilon Notes</h1>
-            <p style="color: #888; font-size: 12px; margin-bottom: 30px;">Source: ${notesUrl}</p>
-            <div style="font-size: 14px;">${data.summary.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #2C3E50; max-width: 800px; margin: 0 auto; background: #FFFFFF; padding: 0; box-sizing: border-box;">
+            <!-- Header Banner -->
+            <div style="background: linear-gradient(135deg, #0f4c5c 0%, #1a5f7a 100%); color: #FFFFFF; padding: 35px 45px; border-bottom: 5px solid #c5a880; position: relative; border-top-left-radius: 4px; border-top-right-radius: 4px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #C5A880; font-weight: 700;">EPSILON STUDY ENGINE</span>
+                <span style="font-size: 10px; color: rgba(255,255,255,0.7); font-weight: 500;">DATE: ${new Date().toLocaleDateString()}</span>
+              </div>
+              <h1 style="font-size: 24px; font-weight: 800; line-height: 1.2; margin: 0 0 10px 0; color: #FFFFFF; letter-spacing: -0.5px;">${title}</h1>
+              <div style="font-size: 12px; color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px;">
+                <span style="color: #C5A880; font-weight: 700;">SOURCE:</span> 
+                <span style="text-decoration: underline; opacity: 0.9;">${notesUrl}</span>
+              </div>
+            </div>
+            
+            <!-- Content Area -->
+            <div style="padding: 40px 45px; background-color: #fafbfc;">
+              <!-- Executive Summary Callout Box -->
+              <div style="background: #FFFFFF; border-left: 4px solid #1a5f7a; border-radius: 6px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.015);">
+                <h4 style="margin: 0 0 8px 0; color: #1a5f7a; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+                  <span style="background: #1a5f7a; width: 6px; height: 6px; display: inline-block; border-radius: 50%;"></span>
+                  Executive Summary Overview
+                </h4>
+                <p style="font-size: 12.5px; line-height: 1.6; color: #4A5568; margin: 0; font-style: italic;">
+                  ${overview}
+                </p>
+              </div>
+              
+              <!-- Styled Body Content -->
+              <div style="background: #FFFFFF; border-radius: 8px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.01);">
+                ${formattedContent}
+              </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background: #F7FAFC; padding: 18px 45px; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
+              <span style="font-size: 10px; color: #A0AEC0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Epsilon Academic Assistant</span>
+              <span style="font-size: 10px; color: #A0AEC0;">Page 1 of 1</span>
+            </div>
           </div>
         `;
         
+        // Clean name formatted dynamic filename based on actual content
+        const cleanName = title.toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '') // remove special characters
+          .replace(/\s+/g, '_')         // replace spaces with underscores
+          .replace(/-+/g, '_')          // replace dashes with underscores
+          .substring(0, 35);            // limit length
+        
+        const dynamicFilename = `${cleanName || 'epsilon'}_notes.pdf`;
+        
         const opt = {
-          margin: 10,
-          filename: 'Epsilon_Notes.pdf',
+          margin: 8,
+          filename: dynamicFilename,
           image: { type: 'jpeg' as const, quality: 0.98 },
-          html2canvas: { scale: 2 },
+          html2canvas: { scale: 2.5, useCORS: true },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
         };
         
@@ -351,8 +465,7 @@ export default function Epsilon() {
                       <div 
                         className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
                         onClick={() => {
-                          setMode('flashcard');
-                          setView('chat');
+                          setView('flashcards');
                         }}
                       >
                         <div className="flex items-center justify-between">
@@ -787,6 +900,369 @@ export default function Epsilon() {
                     )}
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ========================================================= */}
+        {/* FLASHCARDS VIEW (Past Chats listing & Interactive 3D Studier) */}
+        {/* ========================================================= */}
+        <AnimatePresence mode="wait">
+          {view === 'flashcards' && (
+            <motion.div
+              key="flashcards"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="flex flex-col h-full absolute inset-0 z-0 bg-gray-50/50 animate-in fade-in duration-250"
+            >
+              {/* HEADER */}
+              <div 
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4"
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              >
+                <button 
+                  onClick={() => {
+                    setView('home');
+                    setFlashcardsDeck([]);
+                    setIsCardFlipped(false);
+                  }} 
+                  className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors" 
+                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                >
+                  <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
+                </button>
+                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Flashcard Generator</h2>
+                <div className="w-10 h-10 flex items-center justify-center" />
+              </div>
+
+              {/* CONTENT */}
+              <div 
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 scrollbar-hide z-0"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              >
+                {/* 1. LOADING STATE */}
+                {generatingFlashcards && (
+                  <div className="flex flex-col items-center justify-center h-full min-h-[350px]">
+                    <div className="relative w-16 h-16 mb-6">
+                      <motion.div 
+                        animate={{ rotate: 360 }} 
+                        transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }} 
+                        className="w-16 h-16 border-4 border-fuchsia-100 border-t-fuchsia-500 rounded-full"
+                      />
+                      <motion.div 
+                        animate={{ scale: [0.8, 1.1, 0.8] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                        className="absolute inset-0 m-auto w-8 h-8 bg-fuchsia-500 rounded-full flex items-center justify-center text-white"
+                      >
+                        <Sparkles size={14} />
+                      </motion.div>
+                    </div>
+                    <h3 className="font-bold text-gray-800 text-base mb-2">Synthesizing Flashcards...</h3>
+                    <p className="text-xs text-gray-400 text-center max-w-xs leading-relaxed">
+                      Epsilon is analyzing your conversation transcript, extracting key terms, definitions, and concepts to build a custom study deck.
+                    </p>
+                  </div>
+                )}
+
+                {/* 2. CHAT HISTORY LISTING */}
+                {!generatingFlashcards && flashcardsDeck.length === 0 && (
+                  <div className="space-y-4">
+                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm">
+                      <h3 className="font-bold text-gray-800 text-sm mb-1.5">Convert Chats into Study Material</h3>
+                      <p className="text-xs text-gray-500 leading-relaxed">
+                        Select any of your recent or saved study dialogues below. Epsilon will extract the core topics and generate a custom deck of interactive cards.
+                      </p>
+                    </div>
+
+                    {/* Unified Chat List */}
+                    {(() => {
+                      // Get active chats with messages
+                      const activeModes = ['general', 'solver', 'coder'];
+                      const activeChatsList = activeModes
+                        .filter(m => threads[m] && threads[m].length > 0)
+                        .map(m => ({
+                          id: `active-${m}`,
+                          title: threadTitles[m] || threads[m].find(msg => msg.role === 'user')?.content.substring(0, 30) + '...' || "Active Chat",
+                          category: m,
+                          messages: threads[m],
+                          isActive: true
+                        }));
+
+                      // Get past saved chats
+                      const pastChatsList = pastChats.map(c => ({
+                        id: c.id,
+                        title: c.title,
+                        category: c.category,
+                        messages: c.messages,
+                        isActive: false
+                      }));
+
+                      const combinedChats = [...activeChatsList, ...pastChatsList];
+
+                      if (combinedChats.length === 0) {
+                        return (
+                          <div className="bg-white border border-gray-100 p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-6">
+                            <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
+                              <MessageCircle size={28} className="text-fuchsia-400" />
+                            </div>
+                            <h3 className="font-bold text-gray-800 text-base mb-1.5">No Conversation History</h3>
+                            <p className="text-xs text-gray-500 leading-relaxed max-w-xs mb-6">
+                              You haven't had any conversations in other modes yet. Start a study session or ask Epsilon to explain some concepts first!
+                            </p>
+                            <div className="flex flex-col w-full gap-2">
+                              <button 
+                                onClick={() => { setMode('general'); setView('chat'); }}
+                                className="w-full py-2.5 bg-fuchsia-50 hover:bg-fuchsia-100 text-fuchsia-600 text-xs font-bold rounded-xl transition-all"
+                              >
+                                Start General Chat
+                              </button>
+                              <button 
+                                onClick={() => { setMode('solver'); setView('chat'); }}
+                                className="w-full py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-600 text-xs font-bold rounded-xl transition-all"
+                              >
+                                Open Step-by-Step Solver
+                              </button>
+                              <button 
+                                onClick={() => { setMode('coder'); setView('chat'); }}
+                                className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold rounded-xl transition-all"
+                              >
+                                Launch Code Debugger
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Available Conversations ({combinedChats.length})</h4>
+                          {combinedChats.map((chat) => {
+                            const catLabel = chat.category === 'coder' ? 'Code Debugger' : chat.category === 'solver' ? 'Step-by-Step Solver' : 'General Chat';
+                            const badgeColor = chat.category === 'coder' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : chat.category === 'solver' ? 'bg-amber-50 text-amber-600 border-amber-100/50' : 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100/50';
+                            
+                            const triggerFlashcardGen = async () => {
+                              setGeneratingFlashcards(true);
+                              setSelectedChatTitle(chat.title);
+                              try {
+                                const res = await fetch("/api/flashcard", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ messages: chat.messages }),
+                                });
+                                const responseData = await res.json();
+                                if (responseData.flashcards && responseData.flashcards.length > 0) {
+                                  setFlashcardsDeck(responseData.flashcards);
+                                  setCurrentCardIndex(0);
+                                  setIsCardFlipped(false);
+                                } else {
+                                  alert("Could not extract any clear flashcards from this conversation. Try a chat with more definitions or study questions!");
+                                }
+                              } catch (e) {
+                                console.error("Error generating flashcards:", e);
+                                alert("Failed to connect to the Flashcard Generator API.");
+                              } finally {
+                                setGeneratingFlashcards(false);
+                              }
+                            };
+
+                            return (
+                              <div 
+                                key={chat.id} 
+                                onClick={triggerFlashcardGen}
+                                className="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-fuchsia-200 transition-all flex items-center justify-between cursor-pointer group"
+                              >
+                                <div className="flex flex-col gap-1.5 max-w-[75%]">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 border rounded-full ${badgeColor}`}>
+                                      {catLabel}
+                                    </span>
+                                    {chat.isActive && (
+                                      <span className="text-[9px] bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                                        Active
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-xs font-bold text-gray-800 line-clamp-1 group-hover:text-fuchsia-600 transition-colors">{chat.title}</span>
+                                  <span className="text-[10px] text-gray-400">{chat.messages.length} conversational statements</span>
+                                </div>
+                                <button className="w-8 h-8 rounded-full bg-fuchsia-50 group-hover:bg-fuchsia-500 group-hover:text-white text-fuchsia-500 flex items-center justify-center transition-all shrink-0">
+                                  <Sparkles size={14} className="group-hover:animate-pulse" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* 3. INTERACTIVE 3D DECK STUDIER */}
+                {!generatingFlashcards && flashcardsDeck.length > 0 && (
+                  <div className="space-y-6 max-w-sm mx-auto">
+                    {/* Studier Header Info */}
+                    <div className="flex items-center justify-between">
+                      <button 
+                        onClick={() => { setFlashcardsDeck([]); setIsCardFlipped(false); }} 
+                        className="text-xs font-bold text-gray-500 hover:text-fuchsia-500 transition-colors flex items-center gap-1"
+                      >
+                        <ChevronLeft size={16} /> Choose Another Chat
+                      </button>
+                      <span className="text-[10px] font-extrabold text-fuchsia-500 uppercase tracking-widest bg-fuchsia-50 border border-fuchsia-100 px-3 py-1 rounded-full">
+                        Study Session
+                      </span>
+                    </div>
+
+                    <div className="text-center">
+                      <h3 className="font-bold text-gray-800 text-sm line-clamp-1">{selectedChatTitle}</h3>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Click the card below to flip and reveal the answer</p>
+                    </div>
+
+                    {/* Progress Track */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-[10px] font-extrabold text-gray-400">
+                        <span>CARD PROGRESS</span>
+                        <span>{currentCardIndex + 1} OF {flashcardsDeck.length}</span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-full transition-all duration-300"
+                          style={{ width: `${((currentCardIndex + 1) / flashcardsDeck.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3D Flip Card Container */}
+                    <div 
+                      onClick={() => setIsCardFlipped(!isCardFlipped)}
+                      className="perspective-1000 w-full aspect-[5/3] cursor-pointer relative"
+                    >
+                      <div 
+                        className={`w-full h-full rounded-[2rem] transform-style-3d transition-transform duration-500 shadow-[0_15px_40px_-5px_rgba(0,0,0,0.06)] relative border border-gray-100/50 ${isCardFlipped ? 'rotate-y-180' : ''}`}
+                      >
+                        {/* Front Side: Question */}
+                        <div className="absolute inset-0 w-full h-full rounded-[2rem] bg-gradient-to-br from-white to-gray-50 flex flex-col justify-between p-6 backface-hidden">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-fuchsia-50 flex items-center justify-center">
+                              <Bot size={10} className="text-fuchsia-500" />
+                            </span>
+                            <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Question card</span>
+                          </div>
+                          <div className="flex-1 flex items-center justify-center text-center px-4">
+                            <p className="text-sm font-bold text-gray-800 leading-relaxed max-h-[90px] overflow-y-auto scrollbar-hide">
+                              {flashcardsDeck[currentCardIndex]?.question}
+                            </p>
+                          </div>
+                          <p className="text-[9px] text-gray-450 font-bold tracking-wider text-center uppercase animate-pulse">
+                            Click Card To Reveal Answer
+                          </p>
+                        </div>
+
+                        {/* Back Side: Answer */}
+                        <div className="absolute inset-0 w-full h-full rounded-[2rem] bg-gradient-to-br from-fuchsia-500 to-indigo-600 flex flex-col justify-between p-6 backface-hidden rotate-y-180 text-white shadow-xl shadow-fuchsia-500/10">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                              <Sparkles size={10} className="text-white" />
+                            </span>
+                            <span className="text-[9px] font-extrabold text-fuchsia-100 uppercase tracking-widest">Answer key</span>
+                          </div>
+                          <div className="flex-1 flex items-center justify-center text-center px-4">
+                            <p className="text-sm font-medium text-white/95 leading-relaxed max-h-[90px] overflow-y-auto scrollbar-hide">
+                              {flashcardsDeck[currentCardIndex]?.answer}
+                            </p>
+                          </div>
+                          <p className="text-[9px] text-fuchsia-200/80 font-bold tracking-wider text-center uppercase">
+                            Click Card To Flip Back
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navigation Controls */}
+                    <div className="flex items-center justify-between gap-4">
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (currentCardIndex > 0) {
+                            setCurrentCardIndex(currentCardIndex - 1); 
+                            setIsCardFlipped(false);
+                          }
+                        }}
+                        disabled={currentCardIndex === 0}
+                        className="flex-1 py-3 border border-gray-200 hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:hover:bg-white text-gray-600 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                      >
+                        <ChevronLeft size={16} /> Prev Card
+                      </button>
+                      
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (currentCardIndex < flashcardsDeck.length - 1) {
+                            setCurrentCardIndex(currentCardIndex + 1); 
+                            setIsCardFlipped(false);
+                          }
+                        }}
+                        disabled={currentCardIndex === flashcardsDeck.length - 1}
+                        className="flex-1 py-3 bg-fuchsia-500 hover:bg-fuchsia-600 active:scale-95 disabled:opacity-50 disabled:hover:bg-fuchsia-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-fuchsia-500/20"
+                      >
+                        Next Card <ChevronLeft size={16} className="rotate-180" />
+                      </button>
+                    </div>
+
+                    {/* Actions and Export Bar */}
+                    <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            const markdownContent = flashcardsDeck.map((card, i) => `### Card ${i + 1}\n\n**Question**: ${card.question}\n\n**Answer**: ${card.answer}`).join('\n\n---\n\n');
+                            setSavedItems(prev => [...prev, {
+                              id: Date.now().toString(),
+                              title: `${selectedChatTitle} Flashcards`,
+                              category: 'Flashcards',
+                              content: markdownContent
+                            }]);
+                            setSuccessFeedback("Saved to Bookmarks!");
+                            setTimeout(() => setSuccessFeedback(""), 2000);
+                          }}
+                          className="flex-1 py-2.5 bg-gray-150 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Bookmark size={14} /> Bookmark Deck
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const fileContent = flashcardsDeck.map(card => `${card.question.replace(/\t/g, ' ')}\t${card.answer.replace(/\t/g, ' ')}`).join('\n');
+                            const blob = new Blob([fileContent], { type: 'text/tab-separated-values;charset=utf-8' });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `${selectedChatTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')}_anki_deck.txt`);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            setSuccessFeedback("Downloaded Anki Deck!");
+                            setTimeout(() => setSuccessFeedback(""), 2000);
+                          }}
+                          className="flex-1 py-2.5 bg-fuchsia-50 hover:bg-fuchsia-100 text-fuchsia-600 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Download size={14} /> Export to Anki
+                        </button>
+                      </div>
+
+                      {successFeedback && (
+                        <motion.p 
+                          initial={{ opacity: 0, y: -5 }} 
+                          animate={{ opacity: 1, y: 0 }} 
+                          className="text-[10px] text-green-500 font-extrabold text-center uppercase tracking-wider"
+                        >
+                          {successFeedback}
+                        </motion.p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
