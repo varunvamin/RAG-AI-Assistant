@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff, Paperclip, Plus } from "lucide-react";
+import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff, Paperclip, Plus, Mic, MicOff } from "lucide-react";
 
 export default function Epsilon() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
@@ -42,6 +42,238 @@ export default function Epsilon() {
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [showActionMenu, setShowActionMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Authentication & Multi-user state variables
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authUsername, setAuthUsername] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+
+  // Live Audio Solver State Variables
+  const [isListening, setIsListening] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
+  const silenceTimeoutRef = useRef<any>(null);
+  const isListeningRef = useRef(false);
+
+  // Sync isListening to Ref for asynchronous callbacks
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
+
+  // Load User Data Partition from LocalStorage
+  const loadUserProfile = (username: string) => {
+    try {
+      const data = localStorage.getItem(`epsilon_profile_${username}`);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (parsed.threads) setThreads(parsed.threads);
+        if (parsed.pastChats) setPastChats(parsed.pastChats);
+        if (parsed.savedItems) setSavedItems(parsed.savedItems);
+        if (parsed.threadTitles) setThreadTitles(parsed.threadTitles);
+      } else {
+        // Reset states for fresh user profile
+        setThreads({ general: [], flashcard: [], solver: [], coder: [] });
+        setPastChats([]);
+        setSavedItems([]);
+        setThreadTitles({});
+      }
+    } catch (e) {
+      console.error("Failed to load user profile:", e);
+    }
+  };
+
+  // Auto-Save User Profile on State Modifications
+  useEffect(() => {
+    if (currentUser) {
+      const profileData = { threads, pastChats, savedItems, threadTitles };
+      localStorage.setItem(`epsilon_profile_${currentUser}`, JSON.stringify(profileData));
+    }
+  }, [threads, pastChats, savedItems, threadTitles, currentUser]);
+
+  // Initial authentication restore check
+  useEffect(() => {
+    const cachedUser = localStorage.getItem("epsilon_current_user");
+    if (cachedUser) {
+      setCurrentUser(cachedUser);
+      loadUserProfile(cachedUser);
+    }
+  }, []);
+
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    if (!authUsername.trim() || !authPassword.trim()) {
+      setAuthError("All fields are required.");
+      return;
+    }
+    const usersRaw = localStorage.getItem("epsilon_registered_users") || "{}";
+    let users: Record<string, string> = {};
+    try {
+      users = JSON.parse(usersRaw);
+    } catch (err) {
+      console.error("Failed to parse local user registry:", err);
+    }
+
+    if (authMode === 'login') {
+      if (users[authUsername] && users[authUsername] === authPassword) {
+        setCurrentUser(authUsername);
+        localStorage.setItem("epsilon_current_user", authUsername);
+        loadUserProfile(authUsername);
+      } else {
+        setAuthError("Invalid username or password.");
+      }
+    } else {
+      if (users[authUsername]) {
+        setAuthError("Username already exists.");
+      } else {
+        users[authUsername] = authPassword;
+        localStorage.setItem("epsilon_registered_users", JSON.stringify(users));
+        setCurrentUser(authUsername);
+        localStorage.setItem("epsilon_current_user", authUsername);
+        
+        // Setup empty clean profile
+        setThreads({ general: [], flashcard: [], solver: [], coder: [] });
+        setPastChats([]);
+        setSavedItems([]);
+        setThreadTitles({});
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    stopAudioListening();
+    setCurrentUser(null);
+    localStorage.removeItem("epsilon_current_user");
+    setAuthUsername("");
+    setAuthPassword("");
+    setAuthError("");
+    setThreads({ general: [], flashcard: [], solver: [], coder: [] });
+    setPastChats([]);
+    setSavedItems([]);
+    setThreadTitles({});
+    setView('home');
+  };
+
+  // Speech Recognition Event Callbacks & Control handlers
+  const startAudioListening = () => {
+    try {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech Recognition is not natively supported in this browser or OS shell.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setLiveTranscript("");
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech Recognition error:", event.error);
+        if (event.error === 'not-allowed') {
+          alert("Audio hardware permission denied. Please allow microphone access.");
+          stopAudioListening();
+        }
+      };
+
+      recognition.onend = () => {
+        if (isListeningRef.current) {
+          try {
+            recognitionRef.current?.start();
+          } catch (e) {
+            console.error("Failed to continuously restart SpeechRecognition:", e);
+          }
+        } else {
+          setIsListening(false);
+        }
+      };
+
+      recognition.onresult = (event: any) => {
+        let finalTranscript = "";
+        let interimTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText.trim()) {
+          setLiveTranscript(currentText);
+
+          if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+          }
+
+          // Auto-trigger Epsilon when speaker pauses for 2 seconds after a question
+          silenceTimeoutRef.current = setTimeout(() => {
+            const questionWords = ['what', 'why', 'how', 'who', 'when', 'where', 'which', 'is', 'are', 'can', 'should', 'explain', 'solve', 'analyze', 'debug'];
+            const textLower = currentText.toLowerCase().trim();
+            const isQuestion = textLower.endsWith('?') || questionWords.some(word => textLower.startsWith(word) || textLower.includes(` ${word} `));
+
+            if (isQuestion && isListeningRef.current) {
+              handleSend(currentText, mode, false);
+              setLiveTranscript("");
+              recognition.stop();
+            }
+          }, 2000);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (e) {
+      console.error("Speech Recognition initialization failure:", e);
+    }
+  };
+
+  const stopAudioListening = () => {
+    setIsListening(false);
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+      recognitionRef.current = null;
+    }
+    setLiveTranscript("");
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopAudioListening();
+    } else {
+      startAudioListening();
+    }
+  };
+
+  // Clean up SpeechRecognition on unmount
+  useEffect(() => {
+    return () => {
+      if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -382,12 +614,97 @@ export default function Epsilon() {
     <div className="flex items-center justify-center h-screen w-screen bg-transparent p-2 font-sans antialiased select-none overflow-hidden">
       <video ref={videoRef} autoPlay playsInline muted className="hidden" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        className="w-full h-full bg-white/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
-      >
+      {!currentUser ? (
+        <div className="w-full h-full bg-slate-950 flex items-center justify-center relative p-8 rounded-[2.5rem] border border-slate-900 overflow-hidden shadow-2xl">
+          {/* Stunning glowing background blobs */}
+          <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-sm bg-slate-900/45 border border-slate-800/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden z-10"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+          >
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500" />
+            
+            {/* Logo */}
+            <div className="w-16 h-16 bg-gradient-to-br from-fuchsia-500/10 to-indigo-500/10 border border-fuchsia-500/30 rounded-2xl flex items-center justify-center mb-4">
+              <Sparkles className="text-fuchsia-400 animate-pulse" size={28} />
+            </div>
+            
+            <h1 className="text-2xl font-black text-white tracking-tight">Epsilon Engine</h1>
+            <p className="text-slate-400 text-xs mt-1 text-center max-w-[240px]">Advanced AI Screen Reader & Personal Study Portal</p>
+            
+            {/* Login / Signup Toggle */}
+            <div className="w-full bg-slate-950 p-1 rounded-xl flex items-center gap-1 mt-6 border border-slate-800/50">
+              <button 
+                onClick={() => { setAuthMode('login'); setAuthError(""); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${authMode === 'login' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-slate-400 hover:text-slate-300'}`}
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={() => { setAuthMode('signup'); setAuthError(""); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${authMode === 'signup' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-slate-400 hover:text-slate-300'}`}
+              >
+                Create Account
+              </button>
+            </div>
+            
+            {/* Form */}
+            <form onSubmit={handleAuthSubmit} className="w-full space-y-4 mt-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Username</label>
+                <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus-within:border-fuchsia-500 transition-colors">
+                  <User size={16} className="text-slate-500 shrink-0" />
+                  <input 
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    placeholder="Enter username" 
+                    className="bg-transparent border-none outline-none text-xs w-full text-slate-200 placeholder:text-slate-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password</label>
+                <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus-within:border-fuchsia-500 transition-colors">
+                  <Code size={16} className="text-slate-500 shrink-0" />
+                  <input 
+                    type="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="••••••••" 
+                    className="bg-transparent border-none outline-none text-xs w-full text-slate-200 placeholder:text-slate-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+              
+              {authError && (
+                <p className="text-[10px] text-rose-450 font-bold uppercase tracking-wider text-center">{authError}</p>
+              )}
+              
+              <button 
+                type="submit" 
+                className="w-full py-3 bg-fuchsia-500 hover:bg-fuchsia-600 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-fuchsia-500/20 mt-2 cursor-pointer"
+              >
+                {authMode === 'login' ? 'Authenticate Session' : 'Register Profile'}
+              </button>
+            </form>
+            
+            <p className="text-[10px] text-slate-500 mt-6 text-center italic">
+              🔒 Offline security active. Profiles are saved locally.
+            </p>
+          </motion.div>
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          className="w-full h-full bg-white/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
+        >
         {/* ========================================================= */}
         {/* HOME VIEW (Epsilon Dashboard) */}
         {/* ========================================================= */}
@@ -409,9 +726,14 @@ export default function Epsilon() {
                   <Menu size={18} className="text-gray-500" />
                 </div>
                 <h2 className="text-lg font-bold text-gray-800 tracking-tight">Epsilon</h2>
-                <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
-                   <User size={20} className="text-fuchsia-500" />
-                </div>
+                <button 
+                  onClick={handleLogout} 
+                  title={`Logged in as ${currentUser}. Click to logout.`}
+                  className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase"
+                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                >
+                  {currentUser?.substring(0, 2)}
+                </button>
               </div>
 
               {/* HOME CONTENT */}
@@ -574,9 +896,14 @@ export default function Epsilon() {
                       <Save size={18} className="text-gray-500" />
                     )}
                   </button>
-                  <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden">
-                     <User size={20} className="text-fuchsia-500" />
-                  </div>
+                  <button 
+                    onClick={handleLogout} 
+                    title={`Logged in as ${currentUser}. Click to logout.`}
+                    className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  >
+                    {currentUser?.substring(0, 2)}
+                  </button>
                 </div>
               </div>
 
@@ -681,6 +1008,30 @@ export default function Epsilon() {
                 className="absolute bottom-6 left-6 right-6 z-20 flex flex-col gap-2"
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
+                {isListening && (
+                  <div className="bg-slate-955/90 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2 relative shadow-lg shadow-fuchsia-500/10 animate-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                        </span>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Live Meeting Transcribing</span>
+                      </div>
+                      
+                      {/* Pulse Equalizer */}
+                      <div className="flex gap-0.5 items-end h-3">
+                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-2" style={{ animationDelay: '0.1s' }} />
+                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-3" style={{ animationDelay: '0.3s' }} />
+                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-1.5" style={{ animationDelay: '0.5s' }} />
+                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-2.5" style={{ animationDelay: '0.2s' }} />
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-200 italic leading-relaxed line-clamp-2 max-h-12 overflow-y-auto scrollbar-hide font-medium">
+                      {liveTranscript || "Listening... Speak or play meeting audio to auto-solve."}
+                    </p>
+                  </div>
+                )}
                 {attachedImage && (
                   <div className="relative self-start ml-2">
                     <img src={attachedImage} alt="Attachment" className="h-16 w-16 object-cover rounded-xl border-2 border-fuchsia-500 shadow-md" />
@@ -728,6 +1079,23 @@ export default function Epsilon() {
                     title={useVision ? "Vision: ON" : "Vision: OFF"}
                   >
                     {useVision ? <Monitor size={16} /> : <MonitorOff size={16} />}
+                  </button>
+
+                  {/* Microphone Listener Button */}
+                  <button
+                    type="button"
+                    onClick={toggleListening}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isListening ? 'bg-fuchsia-500 text-white' : 'bg-gray-150 text-gray-400 hover:bg-gray-200'}`}
+                    title={isListening ? "Stop listening to live meeting audio" : "Start listening to live meeting audio"}
+                  >
+                    {isListening ? (
+                      <span className="relative flex h-4 w-4 items-center justify-center">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <Mic size={16} className="relative text-white" />
+                      </span>
+                    ) : (
+                      <MicOff size={16} />
+                    )}
                   </button>
 
                   <input
@@ -1375,6 +1743,7 @@ export default function Epsilon() {
         </AnimatePresence>
 
       </motion.div>
+      )}
     </div>
   );
 }
