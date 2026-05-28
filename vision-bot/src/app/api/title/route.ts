@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const chatContent = history.map((msg: any) => `${msg.role}: ${msg.content}`).join('\n').substring(0, 2000);
 
     const response = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "llama-3.1-8b-instant",
       messages: [
         { role: "system", content: "You are a title generator. Generate a very short, concise, and accurate title (maximum 4 words) for the following chat. Do not use quotes, prefixes, or punctuation. Just the title itself." },
         { role: "user", content: chatContent },
@@ -26,7 +26,10 @@ export async function POST(req: NextRequest) {
     });
 
     let title = response.choices[0].message.content?.trim() || "Untitled Chat";
+    // Clean up title from common assistant preambles
+    title = title.replace(/^(title|chat title|here is the title|proposed title|subject)[:\s-]*/i, '');
     title = title.replace(/["']/g, ''); // Remove quotes
+    title = title.trim();
 
     return NextResponse.json({ title });
   } catch (error: any) {

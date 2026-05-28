@@ -42,10 +42,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const systemPrompt = "You are a professional research AI. The user has provided text extracted directly from a website or YouTube video. Generate a highly detailed, beautifully formatted Professional PDF Summary of the content. You MUST return your response as a valid JSON object with exactly three keys: 'title' (a short, catchy, descriptive academic title for the PDF, maximum 5-6 words), 'overview' (a concise 2-3 sentence executive summary explaining the main core focus of the content), and 'summary' (a beautifully structured, highly detailed notes summary covering every important topic, using clear markdown subheadings (like ## and ###), bullet points, and key terms).";
+    const systemPrompt = "You are a professional research AI. The user has provided text extracted directly from a website or YouTube video. Generate a highly detailed, beautifully formatted Professional PDF Summary of the content. You MUST return your response as a valid JSON object with exactly three keys: 'title' (a short, catchy, descriptive academic title for the PDF, maximum 5-6 words), 'overview' (a concise 2-3 sentence executive summary explaining the main core focus of the content), and 'summary' (a beautifully structured, highly detailed notes summary covering every important topic, using clear markdown subheadings (like ## and ###), bullet points, and key terms). IMPORTANT: The value for 'summary' must be a single string containing the markdown text.";
 
     const response = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },
         {

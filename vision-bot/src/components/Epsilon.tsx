@@ -170,14 +170,19 @@ export default function Epsilon() {
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
+      let lastErrorType = "";
+
       recognition.onstart = () => {
         setIsListening(true);
         setLiveTranscript("");
       };
 
       recognition.onerror = (event: any) => {
-        console.error("Speech Recognition error:", event.error);
-        if (event.error === 'not-allowed') {
+        const err = event.error;
+        console.error("Speech Recognition error:", err);
+        lastErrorType = err;
+        
+        if (err === 'not-allowed') {
           alert("Audio hardware permission denied. Please allow microphone access.");
           stopAudioListening();
         }
@@ -185,11 +190,19 @@ export default function Epsilon() {
 
       recognition.onend = () => {
         if (isListeningRef.current) {
-          try {
-            recognitionRef.current?.start();
-          } catch (e) {
-            console.error("Failed to continuously restart SpeechRecognition:", e);
-          }
+          // If the last error was network-related, wait 2 seconds before retrying to prevent crashing browser thread
+          const restartDelay = lastErrorType === 'network' ? 2000 : 300;
+          lastErrorType = ""; // Reset
+          
+          setTimeout(() => {
+            if (isListeningRef.current) {
+              try {
+                recognitionRef.current?.start();
+              } catch (e) {
+                console.warn("Silent SpeechRecognition restart warning:", e);
+              }
+            }
+          }, restartDelay);
         } else {
           setIsListening(false);
         }
@@ -215,18 +228,18 @@ export default function Epsilon() {
             clearTimeout(silenceTimeoutRef.current);
           }
 
-          // Auto-trigger Epsilon when speaker pauses for 2 seconds after a question
+          // Auto-trigger Epsilon when speaker pauses for 1.5 seconds (quicker processing)
           silenceTimeoutRef.current = setTimeout(() => {
-            const questionWords = ['what', 'why', 'how', 'who', 'when', 'where', 'which', 'is', 'are', 'can', 'should', 'explain', 'solve', 'analyze', 'debug'];
-            const textLower = currentText.toLowerCase().trim();
-            const isQuestion = textLower.endsWith('?') || questionWords.some(word => textLower.startsWith(word) || textLower.includes(` ${word} `));
+            const textCleaned = currentText.trim();
+            const wordCount = textCleaned.split(/\s+/).length;
 
-            if (isQuestion && isListeningRef.current) {
-              handleSend(currentText, mode, false);
+            // Submit if there are at least 2 words to filter out mic clicks/ambient noise
+            if (wordCount >= 2 && isListeningRef.current) {
+              handleSend(textCleaned, mode, false);
               setLiveTranscript("");
               recognition.stop();
             }
-          }, 2000);
+          }, 1500); // 1.5s is the optimal sweet spot for natural speech pauses
         }
       };
 
@@ -351,20 +364,31 @@ export default function Epsilon() {
 
       const data = await response.json();
       if (data.reply) {
+        const assistantReply = data.reply;
         setThreads((prev) => ({
           ...prev,
-          [currentMode]: [...(prev[currentMode] || []), { role: "assistant", content: data.reply }]
+          [currentMode]: [...(prev[currentMode] || []), { role: "assistant", content: assistantReply }]
         }));
         
-        if (isFirstMessage) {
-          fetch("/api/title", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ history: [{ role: "user", content: userMessage }, { role: "assistant", content: data.reply }] }),
-          }).then(res => res.json()).then(titleData => {
-            if (titleData.title) setThreadTitles(prev => ({ ...prev, [currentMode]: titleData.title }));
-          }).catch(console.error);
-        }
+        // Dynamically generate/update the title based on the entire conversation content
+        const updatedHistory = [
+          ...(threads[currentMode] || []),
+          { role: "user", content: userMessage },
+          { role: "assistant", content: assistantReply }
+        ];
+
+        fetch("/api/title", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ history: updatedHistory }),
+        })
+          .then(res => res.json())
+          .then(titleData => {
+            if (titleData.title) {
+              setThreadTitles(prev => ({ ...prev, [currentMode]: titleData.title }));
+            }
+          })
+          .catch(console.error);
       } else {
         throw new Error("No reply from Neural Core.");
       }
@@ -428,7 +452,7 @@ export default function Epsilon() {
     const chatContent = currentChat.map(msg => `**${msg.role === 'user' ? 'You' : 'Epsilon'}**: ${msg.content}`).join('\n\n');
     
     // Fallback title
-    let title = currentChat.find(m => m.role === 'user')?.content.substring(0, 30) + '...' || "Saved Chat";
+    let title = threadTitles[mode] || currentChat.find(m => m.role === 'user')?.content.substring(0, 30) + '...' || "Saved Chat";
 
     try {
       const res = await fetch("/api/title", {
