@@ -57,6 +57,13 @@ export default function Epsilon() {
   const silenceTimeoutRef = useRef<any>(null);
   const isListeningRef = useRef(false);
 
+  // Whisper VAD Refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+
   // Sync isListening to Ref for asynchronous callbacks
   useEffect(() => {
     isListeningRef.current = isListening;
@@ -156,6 +163,115 @@ export default function Epsilon() {
     setView('home');
   };
 
+  // Whisper Voice Activity Detector (VAD) Pipeline
+  const startWhisperVAD = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size > 1000) {
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'audio.webm');
+          
+          try {
+            setLiveTranscript("Analyzing voice...");
+            const res = await fetch('/api/transcribe', {
+              method: 'POST',
+              body: formData,
+            });
+            const data = await res.json();
+            if (data.text && data.text.trim().length >= 2) {
+              setLiveTranscript(data.text);
+              handleSend(data.text, mode, false);
+            } else {
+              setLiveTranscript("");
+            }
+          } catch (err) {
+            console.error("Whisper transcription failed:", err);
+            setLiveTranscript("");
+          }
+        }
+        
+        // Continuous loop restart
+        if (isListeningRef.current) {
+          audioChunksRef.current = [];
+          try {
+            mediaRecorderRef.current?.start();
+          } catch (e) {
+            // ignore
+          }
+        }
+      };
+
+      // Set up Audio Context and Analyser for silence monitoring
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioCtx();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyserRef.current = analyser;
+      analyser.fftSize = 256;
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      let isSpeaking = false;
+      let silenceStart = Date.now();
+      setIsListening(true);
+      setLiveTranscript("Whisper VAD active. Speak to solve.");
+      mediaRecorder.start();
+
+      const checkVolume = () => {
+        if (!isListeningRef.current || !analyserRef.current) return;
+        
+        analyser.getByteFrequencyData(dataArray);
+        
+        let total = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          total += dataArray[i];
+        }
+        const average = total / bufferLength;
+        
+        if (average > 15) { // Active speech threshold
+          if (!isSpeaking) {
+            isSpeaking = true;
+            setLiveTranscript("Listening...");
+          }
+          silenceStart = Date.now();
+        } else {
+          if (isSpeaking) {
+            if (Date.now() - silenceStart > 1500) { // 1.5s natural pause
+              isSpeaking = false;
+              if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+                mediaRecorderRef.current.stop();
+              }
+            }
+          }
+        }
+        
+        requestAnimationFrame(checkVolume);
+      };
+
+      requestAnimationFrame(checkVolume);
+    } catch (err) {
+      console.error("Failed to boot Whisper VAD fallback:", err);
+      setIsListening(false);
+    }
+  };
+
   // Speech Recognition Event Callbacks & Control handlers
   const startAudioListening = () => {
     try {
@@ -182,6 +298,20 @@ export default function Epsilon() {
         console.error("Speech Recognition error:", err);
         lastErrorType = err;
         
+        if (err === 'network') {
+          console.warn("Speech Recognition network error. Seamlessly switching to local Whisper VAD pipeline...");
+          // Stop Web Speech without triggering default end handling
+          if (recognitionRef.current) {
+            try {
+              recognitionRef.current.onend = null; // Prevent onend restart loop
+              recognitionRef.current.stop();
+            } catch (e) {}
+            recognitionRef.current = null;
+          }
+          startWhisperVAD();
+          return;
+        }
+
         if (err === 'not-allowed') {
           alert("Audio hardware permission denied. Please allow microphone access.");
           stopAudioListening();
@@ -252,17 +382,49 @@ export default function Epsilon() {
 
   const stopAudioListening = () => {
     setIsListening(false);
+    
+    // Stop Web Speech
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
     }
     if (recognitionRef.current) {
       try {
+        recognitionRef.current.onend = null;
         recognitionRef.current.stop();
       } catch (e) {
         // ignore
       }
       recognitionRef.current = null;
     }
+
+    // Stop Whisper MediaRecorder and release tracks
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+    mediaRecorderRef.current = null;
+
+    if (micStreamRef.current) {
+      try {
+        micStreamRef.current.getTracks().forEach(track => track.stop());
+      } catch (e) {
+        // ignore
+      }
+      micStreamRef.current = null;
+    }
+
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch (e) {
+        // ignore
+      }
+      audioContextRef.current = null;
+    }
+
     setLiveTranscript("");
   };
 
