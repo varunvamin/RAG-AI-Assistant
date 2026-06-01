@@ -230,8 +230,14 @@ export default function Epsilon() {
       
       let isSpeaking = false;
       let silenceStart = Date.now();
+
+      // Adaptive Calibration Parameters
+      let baselineVolume = 10; // Fallback baseline
+      const calibrationSamples: number[] = [];
+      const calibrationStartTime = Date.now();
+
       setIsListening(true);
-      setLiveTranscript("Whisper VAD active. Speak to solve.");
+      setLiveTranscript("Calibrating background noise...");
       mediaRecorder.start();
 
       const checkVolume = () => {
@@ -245,18 +251,30 @@ export default function Epsilon() {
         }
         const average = total / bufferLength;
         
-        if (average > 15) { // Active speech threshold
-          if (!isSpeaking) {
-            isSpeaking = true;
-            setLiveTranscript("Listening...");
-          }
-          silenceStart = Date.now();
+        // Phase 1: Calibrate noise floor for the first 750ms
+        if (Date.now() - calibrationStartTime < 750) {
+          calibrationSamples.push(average);
+          const sum = calibrationSamples.reduce((a, b) => a + b, 0);
+          // Set baseline to the average ambient noise observed during calibration + small buffer
+          baselineVolume = (sum / calibrationSamples.length) + 4;
         } else {
-          if (isSpeaking) {
-            if (Date.now() - silenceStart > 1500) { // 1.5s natural pause
-              isSpeaking = false;
-              if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-                mediaRecorderRef.current.stop();
+          // Phase 2: Dynamic Voice Activity Detection
+          const speakingThreshold = Math.max(baselineVolume, 14); // Clamp at minimum of 14 to avoid mic hum triggers
+          
+          if (average > speakingThreshold) {
+            if (!isSpeaking) {
+              isSpeaking = true;
+              setLiveTranscript("Listening...");
+            }
+            silenceStart = Date.now(); // Reset silence timestamp
+          } else {
+            if (isSpeaking) {
+              // Pause detection: 1.2 seconds of consecutive silence triggers submission
+              if (Date.now() - silenceStart > 1200) {
+                isSpeaking = false;
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+                  mediaRecorderRef.current.stop();
+                }
               }
             }
           }
@@ -295,11 +313,10 @@ export default function Epsilon() {
 
       recognition.onerror = (event: any) => {
         const err = event.error;
-        console.error("Speech Recognition error:", err);
         lastErrorType = err;
         
         if (err === 'network') {
-          console.warn("Speech Recognition network error. Seamlessly switching to local Whisper VAD pipeline...");
+          console.warn("Speech Recognition network status offline. Seamlessly switching to local Whisper VAD pipeline...");
           // Stop Web Speech without triggering default end handling
           if (recognitionRef.current) {
             try {
@@ -312,6 +329,8 @@ export default function Epsilon() {
           return;
         }
 
+        console.error("Speech Recognition error:", err);
+        
         if (err === 'not-allowed') {
           alert("Audio hardware permission denied. Please allow microphone access.");
           stopAudioListening();
