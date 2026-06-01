@@ -34,11 +34,12 @@ Epsilon operates seamlessly across your system, analyzing your active workspace 
 ### 1. 🖥️ Epsilon Desktop Vision Client (Next.js + Electron)
 A sleek, glassmorphic floating screen companion that sits on top of your workspace:
 * **🔑 Local Multi-User Accounts**: Register and log into any number of offline-secured profiles. Epsilon isolates all active chats, histories, thread titles, and bookmarks dynamically under each username in LocalStorage, preventing user profile crossovers.
-* **🎙️ Live Meeting Audio Solver**: Integrates continuous background transcribing of meeting speaker audio in real-time. Features a glowing recording equalizer panel and automatically solves spoken questions when the speaker pauses for 2 seconds.
+* **🎙️ Live Meeting Audio Solver**: Integrates continuous background transcribing of meeting speaker audio in real-time. Features a glowing recording equalizer panel, a Web Audio API Voice Activity Detector (VAD) that automatically calibrates itself to ambient noise floors, and automatically transcribes via Groq's high-speed Whisper API when the speaker pauses for 1.2 seconds, seamlessly bypassing native SpeechRecognition network issues.
+* **💬 Dynamic Chat Naming**: Automatically and continuously names your chat threads in the sidebar using `llama-3.1-8b-instant` based on the active conversation history, updating in real-time as you discuss new topics.
 * **Live Screen-Sharing Vision**: Scans background apps, browsers, and text-books at a single click. (Automatically ignores its own chat window to analyze only target material!)
 * **Specialized Code Debugger**: Detects programming layouts instantly. Politely rejects unrelated prompts and instructs the user to switch to General or Solver tools.
 * **Step-by-Step Solver**: Breaks down visual equations, diagrams, and educational text into granular, zero-knowledge steps.
-* **Smart Notes Engine (URL to PDF)**: Takes any web page or video transcript, summarizes it, dynamically names it according to content, and designs a magazine-quality academic PDF document.
+* **Smart Notes Engine (URL to PDF)**: Scrapes any web link using Jina Reader (with cheerio fallbacks) and generates structured academic notes using the highly advanced `llama-3.3-70b-versatile` model. Converts summaries into high-quality styled PDFs with magazine-quality layouts using `html2pdf.js`.
 * **3D Flashcard Generator**: Select any conversation session from your history to automatically compile a high-performance interactive deck of flashcards with standard 3D flip transitions and direct Anki-desktop exports.
 
 ### 2. 📚 RAG Portal & Textbook Search (Streamlit + Python)

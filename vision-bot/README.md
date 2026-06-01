@@ -7,6 +7,8 @@ This is the Next.js + Electron companion desktop application for the Epsilon AI 
 ## 🚀 Features
 
 * **Visual Intelligence**: Real-time monitor-screen captures with dedicated context exclusion (ignores the Epsilon GUI to scan background active windows).
+* **Robust Voice Solver & Fallback VAD**: Features a Voice Activity Detection (VAD) engine that calibrates background noise floors dynamically. If standard Web Speech recognition experiences `"network"` drops (highly common in sandboxed environments like Electron), it seamlessly hot-swaps in real-time to a local MediaRecorder pipeline that transcribes audio via Groq's high-speed Whisper API (`whisper-large-v3-turbo`) upon speech breaks.
+* **Dynamic Chat Naming**: Automatically and continuously names chat threads in real-time using `llama-3.1-8b-instant` as the conversation evolves.
 * **3D Flashcard Studier**: Loads conversation histories (active & past) and compiles them into elegant double-sided cards that flip with premium 3D CSS animations.
 * **Professional PDF Generator**: Turns internet references and video transcripts into stunning academic publications, matching high-end graphic design templates.
 * **Specialized Code Debugger**: Strictly monitors background code, explains logics, and politely redirects general questions.
