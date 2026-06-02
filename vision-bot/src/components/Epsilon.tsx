@@ -108,7 +108,21 @@ export default function Epsilon() {
     }
   }, []);
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  // Native Web Crypto SHA-256 Hashing for Secure Local Credentials
+  const hashPassword = async (password: string): Promise<string> => {
+    try {
+      const msgBuffer = new TextEncoder().encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex;
+    } catch (e) {
+      // Obfuscated fallback in case Web Crypto is unsupported
+      return btoa(password);
+    }
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     if (!authUsername.trim() || !authPassword.trim()) {
@@ -123,11 +137,25 @@ export default function Epsilon() {
       console.error("Failed to parse local user registry:", err);
     }
 
+    const enteredHash = await hashPassword(authPassword);
+
     if (authMode === 'login') {
-      if (users[authUsername] && users[authUsername] === authPassword) {
-        setCurrentUser(authUsername);
-        localStorage.setItem("epsilon_current_user", authUsername);
-        loadUserProfile(authUsername);
+      const storedCred = users[authUsername];
+      if (storedCred) {
+        // Support both SHA-256 and old plaintext for seamless password migration
+        const isValid = (storedCred === enteredHash) || (storedCred === authPassword);
+        if (isValid) {
+          // Upgrade password to SHA-256 if it was stored in plaintext
+          if (storedCred === authPassword) {
+            users[authUsername] = enteredHash;
+            localStorage.setItem("epsilon_registered_users", JSON.stringify(users));
+          }
+          setCurrentUser(authUsername);
+          localStorage.setItem("epsilon_current_user", authUsername);
+          loadUserProfile(authUsername);
+        } else {
+          setAuthError("Invalid username or password.");
+        }
       } else {
         setAuthError("Invalid username or password.");
       }
@@ -135,7 +163,7 @@ export default function Epsilon() {
       if (users[authUsername]) {
         setAuthError("Username already exists.");
       } else {
-        users[authUsername] = authPassword;
+        users[authUsername] = enteredHash;
         localStorage.setItem("epsilon_registered_users", JSON.stringify(users));
         setCurrentUser(authUsername);
         localStorage.setItem("epsilon_current_user", authUsername);
