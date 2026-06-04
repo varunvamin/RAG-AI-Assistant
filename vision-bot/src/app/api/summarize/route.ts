@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       if (extractedText.includes("SecurityCompromiseError") || extractedText.includes("Anonymous access to domain") || extractedText.includes("DDoS attack")) {
         throw new Error("Jina blocked by target domain");
       }
-      extractedText = extractedText.substring(0, 20000);
+      extractedText = extractedText.substring(0, 16000);
     } catch (e) {
       console.warn("Jina extraction failed, falling back to Cheerio:", e);
       try {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           content: `Here is the extracted text from the link: \n\n${extractedText}`,
         },
       ],
-      max_tokens: 4000,
+      max_tokens: 3500,
       response_format: { type: "json_object" }
     });
 
