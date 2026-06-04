@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     let systemPrompt = "You are Epsilon, a smart AI Study Assistant.";
 
     if (image) {
-      systemPrompt += " You are currently receiving a live screenshot of the user's screen. IMPORTANT: The screenshot captures the entire desktop, which includes the Epsilon AI chat interface (this bot's UI). DO NOT analyze, mention, or describe the Epsilon chat window itself! Ignore it completely. Only analyze the user's actual background content, apps, or code.";
+      systemPrompt += " You are currently receiving a live screenshot of the user's screen. IMPORTANT: The screenshot captures the entire desktop, which includes the Epsilon AI chat interface (this bot's UI). DO NOT analyze, mention, or describe the Epsilon chat window itself! Ignore it completely. Only analyze the user's actual background content, apps, or code. CRITICAL RULE: If there is chat history, ignore any previous descriptions of the screen. ONLY describe and analyze the CURRENT, LATEST screenshot provided in this message.";
       
       if (mode === 'flashcard') {
         systemPrompt = "You are Epsilon's Flashcard Generator. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Look only at the background apps to generate highly effective Anki-compatible Q&A flashcards based on the visible text. Format them clearly as Question / Answer pairs.";

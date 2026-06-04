@@ -1082,7 +1082,7 @@ export default function Epsilon() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Folder size={18} className="text-amber-400 fill-amber-400" />
-                            <span className="font-bold text-gray-800 text-sm group-hover:text-amber-500 transition-colors">Step-by-Step Solver</span>
+                            <span className="font-bold text-gray-800 text-sm group-hover:text-amber-500 transition-colors">Step-by-Step Explainer</span>
                           </div>
                           <MoreHorizontal size={16} className="text-gray-300" />
                         </div>
@@ -1147,7 +1147,7 @@ export default function Epsilon() {
                 
                 <div className="flex flex-col items-center">
                   <h2 className="text-lg font-bold text-gray-800 tracking-tight">
-                    {mode === 'coder' ? 'Code Debugger Chat' : mode === 'solver' ? 'Step-by-Step Solver' : mode === 'flashcard' ? 'Flashcard Generator' : 'AI Chat'}
+                    {mode === 'coder' ? 'Code Debugger Chat' : mode === 'solver' ? 'Step-by-Step Explainer' : mode === 'flashcard' ? 'Flashcard Generator' : 'AI Chat'}
                   </h2>
                   <div className="flex items-center gap-1.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${isCapturing ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
