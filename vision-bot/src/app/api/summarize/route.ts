@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       if (extractedText.includes("SecurityCompromiseError") || extractedText.includes("Anonymous access to domain") || extractedText.includes("DDoS attack")) {
         throw new Error("Jina blocked by target domain");
       }
-      extractedText = extractedText.substring(0, 15000);
+      extractedText = extractedText.substring(0, 30000);
     } catch (e) {
       console.warn("Jina extraction failed, falling back to Cheerio:", e);
       try {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const systemPrompt = "You are a professional research AI. The user has provided text extracted directly from a website or YouTube video. Generate a highly detailed, beautifully formatted Professional PDF Summary of the content. You MUST return your response as a valid JSON object with exactly three keys: 'title' (a short, catchy, descriptive academic title for the PDF, maximum 5-6 words), 'overview' (a concise 2-3 sentence executive summary explaining the main core focus of the content), and 'summary' (a beautifully structured, highly detailed notes summary covering every important topic, using clear markdown subheadings (like ## and ###), bullet points, and key terms). IMPORTANT: The value for 'summary' must be a single string containing the markdown text.";
+    const systemPrompt = "You are a professional research AI. The user has provided text extracted directly from a website or YouTube video. Generate a highly detailed, beautifully formatted Professional PDF Summary of the content. You MUST return your response as a valid JSON object with exactly three keys: 'title' (a dynamic, catchy, descriptive academic title for the PDF, maximum 5-6 words), 'overview' (a concise 2-3 sentence executive summary explaining the main core focus of the content), and 'summary' (a beautifully structured, EXHAUSTIVE, highly detailed notes summary covering every important topic, using clear markdown subheadings (like ## and ###) based on the content, bullet points, and key terms. Do not skip any features or information, extract everything fully and comprehensively). IMPORTANT: The value for 'summary' must be a single string containing the markdown text.";
 
     const response = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           content: `Here is the extracted text from the link: \n\n${extractedText}`,
         },
       ],
-      max_tokens: 4000,
+      max_tokens: 6000,
       response_format: { type: "json_object" }
     });
 
