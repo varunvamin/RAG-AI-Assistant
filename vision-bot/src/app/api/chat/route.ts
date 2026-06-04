@@ -13,10 +13,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No input provided' }, { status: 400 });
     }
 
-    const formattedHistory = history.map((msg: any) => ({
+    let formattedHistory = history.map((msg: any) => ({
       role: msg.role === 'user' ? 'user' : 'assistant',
       content: msg.content
     }));
+
+    // CRITICAL FIX: If the user explicitly asks to analyze the screen, drop the history 
+    // to prevent the vision model from hallucinating based on past text descriptions.
+    const msgLower = message.toLowerCase();
+    const isNewAnalysis = msgLower.includes("analyze") || msgLower.includes("analyse") || msgLower.includes("describe");
+    if (image && isNewAnalysis) {
+      formattedHistory = [];
+    }
 
     let systemPrompt = "You are Epsilon, a smart AI Study Assistant.";
 
@@ -26,7 +34,7 @@ export async function POST(req: NextRequest) {
       if (mode === 'flashcard') {
         systemPrompt = "You are Epsilon's Flashcard Generator. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Look only at the background apps to generate highly effective Anki-compatible Q&A flashcards based on the visible text. Format them clearly as Question / Answer pairs.";
       } else if (mode === 'solver') {
-        systemPrompt = "You are Epsilon's Step-by-Step Explainer. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Look only at the background apps to find the problem. You must answer questions and solve problems in EXTREMELY full, detailed versions. Assume the user has zero knowledge and break down every tiny concept step-by-step. ALWAYS use dynamic, content-specific headings for your response based on the actual problem instead of generic titles. For any math or equations, you MUST use standard LaTeX formatting (e.g., $$ for block equations and $ for inline math) so they render correctly.";
+        systemPrompt = "You are Epsilon's Step-by-Step Explainer. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Look only at the background apps to find the problem. You must answer questions and solve problems in EXTREMELY full, detailed versions. Assume the user has zero knowledge and break down every tiny concept step-by-step. You MUST make proper, structured headings for each step to make it easy for the user to understand. For any math or equations, you MUST use standard LaTeX formatting (e.g., $$ for block equations and $ for inline math) so they render correctly. DO NOT reference past answers, ONLY focus on the current image.";
       } else if (mode === 'coder') {
         systemPrompt = "You are Epsilon's Specialized Coding Engine. You HAVE full visual capabilities. IMPORTANT: Ignore the Epsilon chat window in the screenshot! Your job is to scan the background apps for ANY code. If the user says 'analyze the screen', you MUST look at the background, find the code, and explain it. NEVER say you cannot see the screen. CRITICAL RULE: If there is absolutely no code visible in the background, AND the user's question is not related to programming, you MUST politely refuse to answer and ask the user to switch to the 'General Chat' or 'Study Tools' section. When explaining code, you MUST include a dedicated 'Logic Explanation' section detailing how the code works, and if you provide any code, you MUST provide the FULL, complete code inside proper markdown code blocks so the user can copy it easily.";
       }
