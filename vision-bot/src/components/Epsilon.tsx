@@ -6,7 +6,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { Send, Menu, Sparkles, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff, Paperclip, Plus, Mic, MicOff, Copy, Check } from "lucide-react";
+import { useTheme } from "next-themes";
+import { Send, Menu, Sparkles, Palette, Moon, Sun, Image as ImageIcon, Code, ScanSearch, User, Home, MessageCircle, Bookmark, ChevronLeft, Search, Folder, MoreHorizontal, Bot, FileText, Download, PanelLeft, Save, X, Monitor, MonitorOff, Paperclip, Plus, Mic, MicOff, Copy, Check } from "lucide-react";
 
 const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
   const match = /language-(\w+)/.exec(className || "");
@@ -20,10 +21,10 @@ const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
     return (
       <div className="relative group my-4 rounded-xl overflow-hidden bg-[#1E1E1E] border border-gray-700 shadow-md">
         <div className="flex items-center justify-between px-4 py-2 bg-[#2D2D2D] border-b border-gray-700">
-          <span className="text-xs font-mono text-gray-400">{match[1]}</span>
+          <span className="text-xs font-mono text-muted-foreground">{match[1]}</span>
           <button
             onClick={handleCopy}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-white transition-colors"
             title="Copy code"
           >
             {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
@@ -38,7 +39,7 @@ const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
     );
   }
   return (
-    <code className="bg-gray-100 text-pink-500 rounded px-1.5 py-0.5 text-sm font-mono" {...props}>
+    <code className="bg-muted text-pink-500 rounded px-1.5 py-0.5 text-sm font-mono" {...props}>
       {children}
     </code>
   );
@@ -88,6 +89,9 @@ export default function Epsilon() {
   const [authUsername, setAuthUsername] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const { theme, setTheme } = useTheme();
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const changeAccent = (color: string) => { document.documentElement.style.setProperty('--primary', color); };
 
   // Live Audio Solver State Variables
   const [isListening, setIsListening] = useState(false);
@@ -168,51 +172,36 @@ export default function Epsilon() {
       setAuthError("All fields are required.");
       return;
     }
-    const usersRaw = localStorage.getItem("epsilon_registered_users") || "{}";
-    let users: Record<string, string> = {};
+    
     try {
-      users = JSON.parse(usersRaw);
-    } catch (err) {
-      console.error("Failed to parse local user registry:", err);
-    }
-
-    const enteredHash = await hashPassword(authPassword);
-
-    if (authMode === 'login') {
-      const storedCred = users[authUsername];
-      if (storedCred) {
-        // Support both SHA-256 and old plaintext for seamless password migration
-        const isValid = (storedCred === enteredHash) || (storedCred === authPassword);
-        if (isValid) {
-          // Upgrade password to SHA-256 if it was stored in plaintext
-          if (storedCred === authPassword) {
-            users[authUsername] = enteredHash;
-            localStorage.setItem("epsilon_registered_users", JSON.stringify(users));
-          }
-          setCurrentUser(authUsername);
-          localStorage.setItem("epsilon_current_user", authUsername);
-          loadUserProfile(authUsername);
-        } else {
-          setAuthError("Invalid username or password.");
-        }
-      } else {
-        setAuthError("Invalid username or password.");
+      const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: authUsername, password: authPassword })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setAuthError(data.error || "Authentication failed");
+        return;
       }
-    } else {
-      if (users[authUsername]) {
-        setAuthError("Username already exists.");
-      } else {
-        users[authUsername] = enteredHash;
-        localStorage.setItem("epsilon_registered_users", JSON.stringify(users));
-        setCurrentUser(authUsername);
-        localStorage.setItem("epsilon_current_user", authUsername);
-        
-        // Setup empty clean profile
+      
+      setCurrentUser(data.user.username);
+      localStorage.setItem("epsilon_current_user", data.user.username);
+      if (data.user.theme) setTheme(data.user.theme);
+      if (data.user.accent_color) document.documentElement.style.setProperty('--primary', data.user.accent_color);
+      
+      if (authMode === 'signup') {
         setThreads({ general: [], flashcard: [], solver: [], coder: [] });
         setPastChats([]);
         setSavedItems([]);
         setThreadTitles({});
+      } else {
+        loadUserProfile(data.user.username);
       }
+    } catch (err) {
+      setAuthError("Network error. Please try again.");
     }
   };
 
@@ -975,7 +964,7 @@ export default function Epsilon() {
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="w-full h-full bg-white/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
+          className="w-full h-full bg-card/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
         >
         {/* ========================================================= */}
         {/* HOME VIEW (Epsilon Dashboard) */}
@@ -994,10 +983,10 @@ export default function Epsilon() {
                 className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4"
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
               >
-                <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                  <Menu size={18} className="text-gray-500" />
+                <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <Menu size={18} className="text-muted-foreground" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Epsilon</h2>
+                <h2 className="text-lg font-bold text-foreground tracking-tight">Epsilon</h2>
                 <button 
                   onClick={handleLogout} 
                   title={`Logged in as ${currentUser}. Click to logout.`}
@@ -1018,33 +1007,33 @@ export default function Epsilon() {
                   <div className="w-20 h-20 bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 rounded-[2rem] flex items-center justify-center shadow-[0_10px_30px_rgba(217,70,239,0.3)] mb-4">
                     <Bot size={40} className="text-white" strokeWidth={1.5} />
                   </div>
-                  <h1 className="text-2xl font-black text-gray-900 tracking-tight">Hi there, I'm Epsilon.</h1>
-                  <p className="text-sm text-gray-500 font-medium mt-1">How can I assist you today?</p>
+                  <h1 className="text-2xl font-black text-foreground tracking-tight">Hi there, I'm Epsilon.</h1>
+                  <p className="text-sm text-muted-foreground font-medium mt-1">How can I assist you today?</p>
                 </div>
 
                 {/* Search */}
-                <div className="flex items-center gap-3 bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
-                  <Search size={18} className="text-gray-400" />
-                  <input placeholder="Search modules..." className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400" />
+                <div className="flex items-center gap-3 bg-muted rounded-2xl px-4 py-3 border border-border shadow-sm">
+                  <Search size={18} className="text-muted-foreground" />
+                  <input placeholder="Search modules..." className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-muted-foreground" />
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 bg-gray-50 p-1 rounded-full border border-gray-100">
+                <div className="flex gap-2 bg-muted p-1 rounded-full border border-border">
                   <button 
                     onClick={() => setActiveTab('chat')}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='chat' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='chat' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-gray-700'}`}
                   >
                     Study Tools
                   </button>
                   <button 
                     onClick={() => setActiveTab('code')}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='code' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='code' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-gray-700'}`}
                   >
                     Coding
                   </button>
                   <button 
                     onClick={() => setView('notes')}
-                    className="flex-1 py-2 rounded-full text-xs font-bold transition-all text-gray-500 hover:text-gray-700"
+                    className="flex-1 py-2 rounded-full text-xs font-bold transition-all text-muted-foreground hover:text-gray-700"
                   >
                     Notes
                   </button>
@@ -1057,7 +1046,7 @@ export default function Epsilon() {
                   {activeTab === 'chat' && (
                     <>
                       <div 
-                        className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                        className="bg-card border border-border p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
                         onClick={() => {
                           setView('flashcards');
                         }}
@@ -1065,15 +1054,15 @@ export default function Epsilon() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Folder size={18} className="text-fuchsia-500 fill-fuchsia-500" />
-                            <span className="font-bold text-gray-800 text-sm group-hover:text-fuchsia-500 transition-colors">Flashcard Generator</span>
+                            <span className="font-bold text-foreground text-sm group-hover:text-fuchsia-500 transition-colors">Flashcard Generator</span>
                           </div>
                           <MoreHorizontal size={16} className="text-gray-300" />
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">Auto-generate Anki-compatible flashcard Q&A pairs from the textbook on screen.</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">Auto-generate Anki-compatible flashcard Q&A pairs from the textbook on screen.</p>
                       </div>
 
                       <div 
-                        className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                        className="bg-card border border-border p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
                         onClick={() => {
                           setMode('solver');
                           setView('chat');
@@ -1082,11 +1071,11 @@ export default function Epsilon() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Folder size={18} className="text-amber-400 fill-amber-400" />
-                            <span className="font-bold text-gray-800 text-sm group-hover:text-amber-500 transition-colors">Step-by-Step Explainer</span>
+                            <span className="font-bold text-foreground text-sm group-hover:text-amber-500 transition-colors">Step-by-Step Explainer</span>
                           </div>
                           <MoreHorizontal size={16} className="text-gray-300" />
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">Breaks down complex problems into easy-to-understand educational steps.</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">Breaks down complex problems into easy-to-understand educational steps.</p>
                       </div>
                     </>
                   )}
@@ -1094,7 +1083,7 @@ export default function Epsilon() {
                   {/* CODING TAB */}
                   {activeTab === 'code' && (
                     <div 
-                      className="bg-white border border-gray-100 p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
+                      className="bg-card border border-border p-5 rounded-3xl shadow-sm flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all group" 
                       onClick={() => {
                         setMode('coder');
                         setView('chat');
@@ -1103,11 +1092,11 @@ export default function Epsilon() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Folder size={18} className="text-emerald-500 fill-emerald-500" />
-                          <span className="font-bold text-gray-800 text-sm group-hover:text-emerald-500 transition-colors">Code Debugger</span>
+                          <span className="font-bold text-foreground text-sm group-hover:text-emerald-500 transition-colors">Code Debugger</span>
                         </div>
                         <MoreHorizontal size={16} className="text-gray-300" />
                       </div>
-                      <p className="text-xs text-gray-500 leading-relaxed">Scan the screen for code snippets and identify errors or explain the logic.</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">Scan the screen for code snippets and identify errors or explain the logic.</p>
                       <div className="mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <p className="text-[10px] font-mono text-emerald-600">def debug_code():<br/>  return "Analyzing..."</p>
                       </div>
@@ -1137,35 +1126,35 @@ export default function Epsilon() {
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
               >
                 <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                  <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
-                    <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
+                  <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors">
+                    <ChevronLeft size={18} className="text-muted-foreground pr-0.5" />
                   </button>
-                  <button onClick={() => setIsSidebarOpen(true)} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
-                    <PanelLeft size={18} className="text-gray-500" />
+                  <button onClick={() => setIsSidebarOpen(true)} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors">
+                    <PanelLeft size={18} className="text-muted-foreground" />
                   </button>
                 </div>
                 
                 <div className="flex flex-col items-center">
-                  <h2 className="text-lg font-bold text-gray-800 tracking-tight">
+                  <h2 className="text-lg font-bold text-foreground tracking-tight">
                     {mode === 'coder' ? 'Code Debugger Chat' : mode === 'solver' ? 'Step-by-Step Explainer' : mode === 'flashcard' ? 'Flashcard Generator' : 'AI Chat'}
                   </h2>
                   <div className="flex items-center gap-1.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${isCapturing ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`} />
-                    <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">
+                    <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
                       {isCapturing ? 'Vision Active' : 'Standby'}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                  <button onClick={handleNewChat} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors">
-                    <Plus size={18} className="text-gray-500" />
+                  <button onClick={handleNewChat} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors">
+                    <Plus size={18} className="text-muted-foreground" />
                   </button>
-                  <button onClick={handleSaveChat} disabled={isSaving} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50">
+                  <button onClick={handleSaveChat} disabled={isSaving} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors disabled:opacity-50">
                     {isSaving ? (
                       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full" />
                     ) : (
-                      <Save size={18} className="text-gray-500" />
+                      <Save size={18} className="text-muted-foreground" />
                     )}
                   </button>
                   <button 
@@ -1201,8 +1190,8 @@ export default function Epsilon() {
                       />
                     </div>
                     
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to AI Chat</h1>
-                    <p className="text-gray-500 text-sm mb-8 max-w-[80%]">
+                    <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to AI Chat</h1>
+                    <p className="text-muted-foreground text-sm mb-8 max-w-[80%]">
                       I can see your screen. Select a quick action or type a message below.
                     </p>
 
@@ -1216,7 +1205,7 @@ export default function Epsilon() {
                       </button>
                       <button 
                         onClick={() => handleSend("Describe the images or diagrams on my screen.")}
-                        className="px-4 py-2 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-full border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1.5"
+                        className="px-4 py-2 bg-blue-50 text-primary text-[11px] font-bold rounded-full border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1.5"
                       >
                         <ImageIcon size={14} />
                         Image
@@ -1245,7 +1234,7 @@ export default function Epsilon() {
                           className={`max-w-[85%] p-4 text-[14px] leading-relaxed shadow-sm ${
                             msg.role === "user"
                               ? "bg-fuchsia-500 text-white rounded-[1.5rem] rounded-br-sm shadow-fuchsia-500/20"
-                              : "bg-white border border-gray-100 text-gray-800 rounded-[1.5rem] rounded-bl-sm shadow-sm"
+                              : "bg-card border border-border text-foreground rounded-[1.5rem] rounded-bl-sm shadow-sm"
                           }`}
                         >
                           <ReactMarkdown 
@@ -1269,7 +1258,7 @@ export default function Epsilon() {
                 </AnimatePresence>
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white border border-gray-100 p-4 rounded-[1.5rem] rounded-bl-sm flex gap-1.5 shadow-sm items-center h-12">
+                    <div className="bg-card border border-border p-4 rounded-[1.5rem] rounded-bl-sm flex gap-1.5 shadow-sm items-center h-12">
                       <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
                       <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.15 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
                       <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: 0.3 }} className="w-2 h-2 bg-fuchsia-400 rounded-full" />
@@ -1316,10 +1305,10 @@ export default function Epsilon() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 bg-white rounded-[2rem] p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 relative">
+                <div className="flex items-center gap-2 bg-card rounded-[2rem] p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-border relative">
                   
                   {/* File Upload Button */}
-                  <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors shrink-0">
+                  <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0">
                     <Paperclip size={18} />
                   </button>
                   <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
@@ -1332,9 +1321,9 @@ export default function Epsilon() {
                     
                     <AnimatePresence>
                       {showActionMenu && (
-                        <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute bottom-14 left-0 w-52 bg-white border border-gray-100 shadow-xl rounded-2xl p-2 z-50 flex flex-col gap-1">
-                          <button onClick={() => { setShowActionMenu(false); handleSend("Please analyze the current screen in detail.", mode, true); }} className="flex items-center gap-3 p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl text-left text-xs font-bold text-gray-700 transition-colors">
-                             <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center"><Monitor size={14} className="text-blue-500" /></div> Analyze Screen
+                        <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }} className="absolute bottom-14 left-0 w-52 bg-card border border-border shadow-xl rounded-2xl p-2 z-50 flex flex-col gap-1">
+                          <button onClick={() => { setShowActionMenu(false); handleSend("Please analyze the current screen in detail.", mode, true); }} className="flex items-center gap-3 p-2 hover:bg-muted hover:text-primary rounded-xl text-left text-xs font-bold text-gray-700 transition-colors">
+                             <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center"><Monitor size={14} className="text-primary" /></div> Analyze Screen
                           </button>
                           <button onClick={() => { setShowActionMenu(false); handleSend("Extract all text from the screen and summarize it.", mode, true); }} className="flex items-center gap-3 p-2 hover:bg-orange-50 hover:text-orange-600 rounded-xl text-left text-xs font-bold text-gray-700 transition-colors">
                              <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center"><FileText size={14} className="text-orange-500" /></div> Summarize Screen
@@ -1350,7 +1339,7 @@ export default function Epsilon() {
                   {/* Vision Toggle Button */}
                   <button
                     onClick={() => setUseVision(!useVision)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${useVision ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${useVision ? 'bg-indigo-100 text-indigo-600' : 'bg-muted text-muted-foreground hover:bg-gray-200'}`}
                     title={useVision ? "Vision: ON" : "Vision: OFF"}
                   >
                     {useVision ? <Monitor size={16} /> : <MonitorOff size={16} />}
@@ -1360,12 +1349,12 @@ export default function Epsilon() {
                   <button
                     type="button"
                     onClick={toggleListening}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isListening ? 'bg-fuchsia-500 text-white' : 'bg-gray-150 text-gray-400 hover:bg-gray-200'}`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isListening ? 'bg-fuchsia-500 text-white' : 'bg-gray-150 text-muted-foreground hover:bg-gray-200'}`}
                     title={isListening ? "Stop listening to live meeting audio" : "Start listening to live meeting audio"}
                   >
                     {isListening ? (
                       <span className="relative flex h-4 w-4 items-center justify-center">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-card opacity-75"></span>
                         <Mic size={16} className="relative text-white" />
                       </span>
                     ) : (
@@ -1378,7 +1367,7 @@ export default function Epsilon() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Ask me anything..."
-                    className="flex-1 bg-transparent px-2 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none font-medium"
+                    className="flex-1 bg-transparent px-2 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none font-medium"
                   />
                   <button
                     onClick={() => handleSend()}
@@ -1403,7 +1392,7 @@ export default function Epsilon() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="flex flex-col h-full absolute inset-0 z-0 bg-gray-50/50"
+              className="flex flex-col h-full absolute inset-0 z-0 bg-muted/50"
             >
               {/* HEADER */}
               <div 
@@ -1411,7 +1400,7 @@ export default function Epsilon() {
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
               >
                 <div className="w-10 h-10 flex items-center justify-center" /> {/* Spacer */}
-                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Saved Items</h2>
+                <h2 className="text-lg font-bold text-foreground tracking-tight">Saved Items</h2>
                 <div className="w-10 h-10 flex items-center justify-center" /> {/* Spacer */}
               </div>
 
@@ -1421,29 +1410,29 @@ export default function Epsilon() {
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
                 {savedItems.length === 0 ? (
-                  <div className="bg-white border border-gray-100 p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-10">
+                  <div className="bg-card border border-border p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-10">
                     <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
                       <Bookmark size={28} className="text-fuchsia-400" />
                     </div>
-                    <h3 className="font-bold text-gray-800 text-lg mb-2">No Saved Items Yet</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">
+                    <h3 className="font-bold text-foreground text-lg mb-2">No Saved Items Yet</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       When you generate Flashcards or Notes, they will be saved here for easy export to Anki or PDF.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {savedItems.map((item) => (
-                      <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all">
+                      <div key={item.id} className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden transition-all">
                         <div 
-                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors"
                           onClick={() => setExpandedBookmarkId(expandedBookmarkId === item.id ? null : item.id)}
                         >
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-fuchsia-500 uppercase tracking-wider mb-1">{item.category}</span>
-                            <span className="text-sm font-bold text-gray-800">{item.title}</span>
+                            <span className="text-sm font-bold text-foreground">{item.title}</span>
                           </div>
-                          <div className={`w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center transition-transform ${expandedBookmarkId === item.id ? 'rotate-180' : ''}`}>
-                            <ChevronLeft size={16} className="text-gray-400 -rotate-90" />
+                          <div className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center transition-transform ${expandedBookmarkId === item.id ? 'rotate-180' : ''}`}>
+                            <ChevronLeft size={16} className="text-muted-foreground -rotate-90" />
                           </div>
                         </div>
                         
@@ -1453,9 +1442,9 @@ export default function Epsilon() {
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              className="border-t border-gray-100"
+                              className="border-t border-border"
                             >
-                              <div className="p-5 bg-gray-50/50">
+                              <div className="p-5 bg-muted/50">
                                 <ReactMarkdown 
                                   remarkPlugins={[remarkMath]}
                                   rehypePlugins={[rehypeKatex]}
@@ -1491,17 +1480,17 @@ export default function Epsilon() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="flex flex-col h-full absolute inset-0 z-0 bg-white"
+              className="flex flex-col h-full absolute inset-0 z-0 bg-card"
             >
               {/* HEADER */}
               <div 
                 className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4"
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
               >
-                <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                  <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
+                <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                  <ChevronLeft size={18} className="text-muted-foreground pr-0.5" />
                 </button>
-                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Smart Notes Engine</h2>
+                <h2 className="text-lg font-bold text-foreground tracking-tight">Smart Notes Engine</h2>
                 <div className="w-10 h-10 flex items-center justify-center" />
               </div>
 
@@ -1514,19 +1503,19 @@ export default function Epsilon() {
                   <FileText size={48} className="text-white" strokeWidth={1.5} />
                 </div>
                 
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-3 text-center">Transform links into PDFs</h1>
-                <p className="text-sm text-gray-500 font-medium mb-10 text-center max-w-sm">
+                <h1 className="text-3xl font-black text-foreground tracking-tight mb-3 text-center">Transform links into PDFs</h1>
+                <p className="text-sm text-muted-foreground font-medium mb-10 text-center max-w-sm">
                   Paste any website or video URL. I will read the contents, extract key topics, and generate a professional PDF.
                 </p>
 
-                <div className="w-full max-w-md bg-white border-2 border-indigo-100 rounded-2xl p-2 flex flex-col shadow-xl shadow-indigo-100/50">
+                <div className="w-full max-w-md bg-card border-2 border-indigo-100 rounded-2xl p-2 flex flex-col shadow-xl shadow-indigo-100/50">
                   <div className="flex items-center gap-3 px-4 py-2 border-b border-indigo-50 mb-2">
                     <Search size={18} className="text-indigo-400" />
                     <input 
                       value={notesUrl}
                       onChange={(e) => setNotesUrl(e.target.value)}
                       placeholder="Paste link here (e.g., https://en.wikipedia...)" 
-                      className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-gray-400 font-medium" 
+                      className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-muted-foreground font-medium" 
                     />
                   </div>
                   <button 
@@ -1561,7 +1550,7 @@ export default function Epsilon() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="flex flex-col h-full absolute inset-0 z-0 bg-gray-50/50 animate-in fade-in duration-250"
+              className="flex flex-col h-full absolute inset-0 z-0 bg-muted/50 animate-in fade-in duration-250"
             >
               {/* HEADER */}
               <div 
@@ -1574,12 +1563,12 @@ export default function Epsilon() {
                     setFlashcardsDeck([]);
                     setIsCardFlipped(false);
                   }} 
-                  className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm hover:bg-gray-50 transition-colors" 
+                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors" 
                   style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                 >
-                  <ChevronLeft size={18} className="text-gray-500 pr-0.5" />
+                  <ChevronLeft size={18} className="text-muted-foreground pr-0.5" />
                 </button>
-                <h2 className="text-lg font-bold text-gray-800 tracking-tight">Flashcard Generator</h2>
+                <h2 className="text-lg font-bold text-foreground tracking-tight">Flashcard Generator</h2>
                 <div className="w-10 h-10 flex items-center justify-center" />
               </div>
 
@@ -1605,8 +1594,8 @@ export default function Epsilon() {
                         <Sparkles size={14} />
                       </motion.div>
                     </div>
-                    <h3 className="font-bold text-gray-800 text-base mb-2">Synthesizing Flashcards...</h3>
-                    <p className="text-xs text-gray-400 text-center max-w-xs leading-relaxed">
+                    <h3 className="font-bold text-foreground text-base mb-2">Synthesizing Flashcards...</h3>
+                    <p className="text-xs text-muted-foreground text-center max-w-xs leading-relaxed">
                       Epsilon is analyzing your conversation transcript, extracting key terms, definitions, and concepts to build a custom study deck.
                     </p>
                   </div>
@@ -1615,9 +1604,9 @@ export default function Epsilon() {
                 {/* 2. CHAT HISTORY LISTING */}
                 {!generatingFlashcards && flashcardsDeck.length === 0 && (
                   <div className="space-y-4">
-                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm">
-                      <h3 className="font-bold text-gray-800 text-sm mb-1.5">Convert Chats into Study Material</h3>
-                      <p className="text-xs text-gray-500 leading-relaxed">
+                    <div className="bg-card border border-border p-6 rounded-3xl shadow-sm">
+                      <h3 className="font-bold text-foreground text-sm mb-1.5">Convert Chats into Study Material</h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
                         Select any of your recent or saved study dialogues below. Epsilon will extract the core topics and generate a custom deck of interactive cards.
                       </p>
                     </div>
@@ -1649,12 +1638,12 @@ export default function Epsilon() {
 
                       if (combinedChats.length === 0) {
                         return (
-                          <div className="bg-white border border-gray-100 p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-6">
+                          <div className="bg-card border border-border p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-6">
                             <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
                               <MessageCircle size={28} className="text-fuchsia-400" />
                             </div>
-                            <h3 className="font-bold text-gray-800 text-base mb-1.5">No Conversation History</h3>
-                            <p className="text-xs text-gray-500 leading-relaxed max-w-xs mb-6">
+                            <h3 className="font-bold text-foreground text-base mb-1.5">No Conversation History</h3>
+                            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mb-6">
                               You haven't had any conversations in other modes yet. Start a study session or ask Epsilon to explain some concepts first!
                             </p>
                             <div className="flex flex-col w-full gap-2">
@@ -1683,7 +1672,7 @@ export default function Epsilon() {
 
                       return (
                         <div className="space-y-3">
-                          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Available Conversations ({combinedChats.length})</h4>
+                          <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Available Conversations ({combinedChats.length})</h4>
                           {combinedChats.map((chat) => {
                             const catLabel = chat.category === 'coder' ? 'Code Debugger' : chat.category === 'solver' ? 'Step-by-Step Solver' : 'General Chat';
                             const badgeColor = chat.category === 'coder' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : chat.category === 'solver' ? 'bg-amber-50 text-amber-600 border-amber-100/50' : 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100/50';
@@ -1717,7 +1706,7 @@ export default function Epsilon() {
                               <div 
                                 key={chat.id} 
                                 onClick={triggerFlashcardGen}
-                                className="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-fuchsia-200 transition-all flex items-center justify-between cursor-pointer group"
+                                className="bg-card border border-border p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-fuchsia-200 transition-all flex items-center justify-between cursor-pointer group"
                               >
                                 <div className="flex flex-col gap-1.5 max-w-[75%]">
                                   <div className="flex items-center gap-2">
@@ -1730,8 +1719,8 @@ export default function Epsilon() {
                                       </span>
                                     )}
                                   </div>
-                                  <span className="text-xs font-bold text-gray-800 line-clamp-1 group-hover:text-fuchsia-600 transition-colors">{chat.title}</span>
-                                  <span className="text-[10px] text-gray-400">{chat.messages.length} conversational statements</span>
+                                  <span className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-fuchsia-600 transition-colors">{chat.title}</span>
+                                  <span className="text-[10px] text-muted-foreground">{chat.messages.length} conversational statements</span>
                                 </div>
                                 <button className="w-8 h-8 rounded-full bg-fuchsia-50 group-hover:bg-fuchsia-500 group-hover:text-white text-fuchsia-500 flex items-center justify-center transition-all shrink-0">
                                   <Sparkles size={14} className="group-hover:animate-pulse" />
@@ -1752,7 +1741,7 @@ export default function Epsilon() {
                     <div className="flex items-center justify-between">
                       <button 
                         onClick={() => { setFlashcardsDeck([]); setIsCardFlipped(false); }} 
-                        className="text-xs font-bold text-gray-500 hover:text-fuchsia-500 transition-colors flex items-center gap-1"
+                        className="text-xs font-bold text-muted-foreground hover:text-fuchsia-500 transition-colors flex items-center gap-1"
                       >
                         <ChevronLeft size={16} /> Choose Another Chat
                       </button>
@@ -1762,13 +1751,13 @@ export default function Epsilon() {
                     </div>
 
                     <div className="text-center">
-                      <h3 className="font-bold text-gray-800 text-sm line-clamp-1">{selectedChatTitle}</h3>
-                      <p className="text-[10px] text-gray-400 mt-0.5">Click the card below to flip and reveal the answer</p>
+                      <h3 className="font-bold text-foreground text-sm line-clamp-1">{selectedChatTitle}</h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Click the card below to flip and reveal the answer</p>
                     </div>
 
                     {/* Progress Track */}
                     <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-[10px] font-extrabold text-gray-400">
+                      <div className="flex justify-between items-center text-[10px] font-extrabold text-muted-foreground">
                         <span>CARD PROGRESS</span>
                         <span>{currentCardIndex + 1} OF {flashcardsDeck.length}</span>
                       </div>
@@ -1786,7 +1775,7 @@ export default function Epsilon() {
                       className="perspective-1000 w-full aspect-[5/3] cursor-pointer relative"
                     >
                       <div 
-                        className={`w-full h-full rounded-[2rem] transform-style-3d transition-transform duration-500 shadow-[0_15px_40px_-5px_rgba(0,0,0,0.06)] relative border border-gray-100/50 ${isCardFlipped ? 'rotate-y-180' : ''}`}
+                        className={`w-full h-full rounded-[2rem] transform-style-3d transition-transform duration-500 shadow-[0_15px_40px_-5px_rgba(0,0,0,0.06)] relative border border-border/50 ${isCardFlipped ? 'rotate-y-180' : ''}`}
                       >
                         {/* Front Side: Question */}
                         <div className="absolute inset-0 w-full h-full rounded-[2rem] bg-gradient-to-br from-white to-gray-50 flex flex-col justify-between p-6 backface-hidden">
@@ -1794,10 +1783,10 @@ export default function Epsilon() {
                             <span className="w-5 h-5 rounded-full bg-fuchsia-50 flex items-center justify-center">
                               <Bot size={10} className="text-fuchsia-500" />
                             </span>
-                            <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Question card</span>
+                            <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest">Question card</span>
                           </div>
                           <div className="flex-1 flex items-center justify-center text-center px-4">
-                            <p className="text-sm font-bold text-gray-800 leading-relaxed max-h-[90px] overflow-y-auto scrollbar-hide">
+                            <p className="text-sm font-bold text-foreground leading-relaxed max-h-[90px] overflow-y-auto scrollbar-hide">
                               {flashcardsDeck[currentCardIndex]?.question}
                             </p>
                           </div>
@@ -1809,7 +1798,7 @@ export default function Epsilon() {
                         {/* Back Side: Answer */}
                         <div className="absolute inset-0 w-full h-full rounded-[2rem] bg-gradient-to-br from-fuchsia-500 to-indigo-600 flex flex-col justify-between p-6 backface-hidden rotate-y-180 text-white shadow-xl shadow-fuchsia-500/10">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                            <span className="w-5 h-5 rounded-full bg-card/20 flex items-center justify-center">
                               <Sparkles size={10} className="text-white" />
                             </span>
                             <span className="text-[9px] font-extrabold text-fuchsia-100 uppercase tracking-widest">Answer key</span>
@@ -1837,7 +1826,7 @@ export default function Epsilon() {
                           }
                         }}
                         disabled={currentCardIndex === 0}
-                        className="flex-1 py-3 border border-gray-200 hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:hover:bg-white text-gray-600 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                        className="flex-1 py-3 border border-border hover:bg-muted active:scale-95 disabled:opacity-50 disabled:hover:bg-card text-muted-foreground font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
                       >
                         <ChevronLeft size={16} /> Prev Card
                       </button>
@@ -1858,7 +1847,7 @@ export default function Epsilon() {
                     </div>
 
                     {/* Actions and Export Bar */}
-                    <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
+                    <div className="border-t border-border pt-4 flex flex-col gap-2">
                       <div className="flex gap-2">
                         <button 
                           onClick={() => {
@@ -1923,24 +1912,24 @@ export default function Epsilon() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-20" 
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-card/95 backdrop-blur-md rounded-full px-4 py-2 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-border z-20" 
               style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             >
               <button 
                 onClick={() => setView('home')} 
-                className={`p-3 rounded-full transition-all ${view==='home' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-3 rounded-full transition-all ${view==='home' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-muted-foreground'}`}
               >
                 <Home size={20} />
               </button>
               <button 
                 onClick={() => setView('chat')} 
-                className="p-3 rounded-full transition-all text-gray-400 hover:text-gray-600"
+                className="p-3 rounded-full transition-all text-muted-foreground hover:text-muted-foreground"
               >
                 <MessageCircle size={20} />
               </button>
               <button 
                 onClick={() => setView('bookmarks')} 
-                className={`p-3 rounded-full transition-all ${view==='bookmarks' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-3 rounded-full transition-all ${view==='bookmarks' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-muted-foreground'}`}
               >
                 <Bookmark size={20} />
               </button>
@@ -1962,12 +1951,12 @@ export default function Epsilon() {
               />
               <motion.div
                 initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="absolute top-0 left-0 h-full w-64 bg-white/95 backdrop-blur-xl shadow-2xl z-50 flex flex-col border-r border-gray-100"
+                className="absolute top-0 left-0 h-full w-64 bg-card/95 backdrop-blur-xl shadow-2xl z-50 flex flex-col border-r border-border"
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
-                <div className="p-4 h-20 flex items-center justify-between border-b border-gray-100/50 mt-2">
-                  <h2 className="font-bold text-gray-800 text-lg">History</h2>
-                  <button onClick={() => setIsSidebarOpen(false)} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-800 hover:bg-gray-100 transition-colors">
+                <div className="p-4 h-20 flex items-center justify-between border-b border-border/50 mt-2">
+                  <h2 className="font-bold text-foreground text-lg">History</h2>
+                  <button onClick={() => setIsSidebarOpen(false)} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <X size={16} />
                   </button>
                 </div>
@@ -1977,7 +1966,7 @@ export default function Epsilon() {
                     const hasAnyChats = modes.some(m => (threads[m] && threads[m].length > 0) || pastChats.some(c => c.category === m));
                     
                     if (!hasAnyChats) {
-                      return <p className="text-xs text-gray-400 text-center mt-4">No chat history yet.</p>;
+                      return <p className="text-xs text-muted-foreground text-center mt-4">No chat history yet.</p>;
                     }
 
                     return modes.map(m => {
@@ -1990,7 +1979,7 @@ export default function Epsilon() {
 
                       return (
                         <div key={m} className="space-y-1 mb-4">
-                          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">{titleCategory}</h3>
+                          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2">{titleCategory}</h3>
                           
                           {activeMsgs.length > 0 && (
                             <div 
@@ -2005,7 +1994,7 @@ export default function Epsilon() {
                             <div 
                               key={pastChat.id}
                               onClick={() => loadPastChat(pastChat.id)}
-                              className="text-[13px] font-medium text-gray-600 truncate p-3 bg-gray-50 hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
+                              className="text-[13px] font-medium text-muted-foreground truncate p-3 bg-muted hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
                             >
                               {pastChat.title}
                             </div>
