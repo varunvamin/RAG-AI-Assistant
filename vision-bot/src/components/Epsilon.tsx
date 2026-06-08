@@ -2004,6 +2004,38 @@ export default function Epsilon() {
                     });
                   })()}
                 </div>
+
+                {/* Theme Toggle Button */}
+                <div className="w-full px-4 mb-4 mt-auto">
+                  <button onClick={() => setShowThemeMenu(!showThemeMenu)} className="w-full flex items-center justify-between p-3 rounded-xl bg-muted text-foreground hover:bg-card border border-border transition-all">
+                    <div className="flex items-center gap-3">
+                      <Palette size={18} className="text-primary" />
+                      <span className="font-semibold text-sm">Theme Settings</span>
+                    </div>
+                  </button>
+                  {showThemeMenu && (
+                    <div className="absolute bottom-16 left-4 w-56 bg-card border border-border shadow-xl rounded-xl p-3 z-50">
+                      <div className="mb-3">
+                        <p className="text-xs text-muted-foreground mb-2">Mode</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setTheme('light')} className="flex-1 py-1.5 flex justify-center bg-muted rounded-lg hover:bg-border"><Sun size={14}/></button>
+                          <button onClick={() => setTheme('dark')} className="flex-1 py-1.5 flex justify-center bg-muted rounded-lg hover:bg-border"><Moon size={14}/></button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Accent Color</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => changeAccent('#8b5cf6')} className="w-6 h-6 rounded-full bg-violet-500"></button>
+                          <button onClick={() => changeAccent('#10b981')} className="w-6 h-6 rounded-full bg-emerald-500"></button>
+                          <button onClick={() => changeAccent('#f59e0b')} className="w-6 h-6 rounded-full bg-amber-500"></button>
+                          <button onClick={() => changeAccent('#ef4444')} className="w-6 h-6 rounded-full bg-red-500"></button>
+                          <button onClick={() => changeAccent('#3b82f6')} className="w-6 h-6 rounded-full bg-blue-500"></button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </motion.div>
             </>
           )}
