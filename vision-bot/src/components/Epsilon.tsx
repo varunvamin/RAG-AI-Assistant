@@ -884,7 +884,7 @@ export default function Epsilon() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-sm bg-slate-900/45 border border-slate-800/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden z-10 no-drag"
+            className="w-full max-w-sm bg-slate-900/45 border border-slate-800/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden z-10 drag-region"
           >
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500" />
             
@@ -963,7 +963,7 @@ export default function Epsilon() {
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="w-full h-full bg-card/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
+          className="w-full h-full bg-card/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative drag-region"
         >
         {/* ========================================================= */}
         {/* HOME VIEW (Epsilon Dashboard) */}
