@@ -884,8 +884,7 @@ export default function Epsilon() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-sm bg-slate-900/45 border border-slate-800/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden z-10"
-            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            className="w-full max-w-sm bg-slate-900/45 border border-slate-800/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden z-10 [-webkit-app-region:no-drag]"
           >
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500" />
             
@@ -980,18 +979,16 @@ export default function Epsilon() {
             >
               {/* HEADER */}
               <div 
-                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4 [-webkit-app-region:drag]"
               >
-                <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm [-webkit-app-region:no-drag]">
                   <Menu size={18} className="text-muted-foreground" />
                 </div>
                 <h2 className="text-lg font-bold text-foreground tracking-tight">Epsilon</h2>
                 <button 
                   onClick={handleLogout} 
                   title={`Logged in as ${currentUser}. Click to logout.`}
-                  className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase"
-                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase [-webkit-app-region:no-drag]"
                 >
                   {currentUser?.substring(0, 2)}
                 </button>
@@ -999,8 +996,7 @@ export default function Epsilon() {
 
               {/* HOME CONTENT */}
               <div 
-                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0"
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0 [-webkit-app-region:no-drag]"
               >
                 {/* Greeting Section */}
                 <div className="flex flex-col items-center justify-center text-center pb-2">
@@ -1122,10 +1118,9 @@ export default function Epsilon() {
             >
               {/* HEADER */}
               <div 
-                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab active:cursor-grabbing shrink-0 pt-4 [-webkit-app-region:drag]"
               >
-                <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                <div className="flex gap-2 [-webkit-app-region:no-drag]">
                   <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors">
                     <ChevronLeft size={18} className="text-muted-foreground pr-0.5" />
                   </button>
@@ -1146,7 +1141,7 @@ export default function Epsilon() {
                   </div>
                 </div>
 
-                <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                <div className="flex gap-2 [-webkit-app-region:no-drag]">
                   <button onClick={handleNewChat} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors">
                     <Plus size={18} className="text-muted-foreground" />
                   </button>
@@ -1160,8 +1155,7 @@ export default function Epsilon() {
                   <button 
                     onClick={handleLogout} 
                     title={`Logged in as ${currentUser}. Click to logout.`}
-                    className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase"
-                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                    className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase [-webkit-app-region:no-drag]"
                   >
                     {currentUser?.substring(0, 2)}
                   </button>
@@ -1171,8 +1165,7 @@ export default function Epsilon() {
               {/* MESSAGES AREA */}
               <div 
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0"
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 space-y-6 scrollbar-hide z-0 [-webkit-app-region:no-drag]"
               >
                 {(!threads[mode] || threads[mode].length === 0) && (
                   <motion.div 
@@ -1269,8 +1262,7 @@ export default function Epsilon() {
 
               {/* FLOATING INPUT BOX (Only in Chat View) */}
               <div 
-                className="absolute bottom-6 left-6 right-6 z-20 flex flex-col gap-2"
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className="absolute bottom-6 left-6 right-6 z-20 flex flex-col gap-2 [-webkit-app-region:no-drag]"
               >
                 {isListening && (
                   <div className="bg-slate-955/90 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2 relative shadow-lg shadow-fuchsia-500/10 animate-in slide-in-from-bottom-2 duration-300">
@@ -1396,8 +1388,7 @@ export default function Epsilon() {
             >
               {/* HEADER */}
               <div 
-                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4 [-webkit-app-region:drag]"
               >
                 <div className="w-10 h-10 flex items-center justify-center" /> {/* Spacer */}
                 <h2 className="text-lg font-bold text-foreground tracking-tight">Saved Items</h2>
@@ -1406,8 +1397,7 @@ export default function Epsilon() {
 
               {/* CONTENT */}
               <div 
-                className="flex-1 overflow-y-auto px-6 pb-24 pt-4 space-y-4 scrollbar-hide z-0"
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-4 space-y-4 scrollbar-hide z-0 [-webkit-app-region:no-drag]"
               >
                 {savedItems.length === 0 ? (
                   <div className="bg-card border border-border p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-10">
@@ -1484,10 +1474,9 @@ export default function Epsilon() {
             >
               {/* HEADER */}
               <div 
-                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4 [-webkit-app-region:drag]"
               >
-                <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                <button onClick={() => setView('home')} className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors [-webkit-app-region:no-drag]">
                   <ChevronLeft size={18} className="text-muted-foreground pr-0.5" />
                 </button>
                 <h2 className="text-lg font-bold text-foreground tracking-tight">Smart Notes Engine</h2>
@@ -1496,8 +1485,7 @@ export default function Epsilon() {
 
               {/* CONTENT */}
               <div 
-                className="flex-1 flex flex-col items-center justify-center px-8 pb-32 z-0"
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className="flex-1 flex flex-col items-center justify-center px-8 pb-32 z-0 [-webkit-app-region:no-drag]"
               >
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-8 transform -rotate-6">
                   <FileText size={48} className="text-white" strokeWidth={1.5} />
@@ -1554,8 +1542,7 @@ export default function Epsilon() {
             >
               {/* HEADER */}
               <div 
-                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                className="h-20 flex items-center justify-between px-6 bg-transparent z-10 cursor-grab shrink-0 pt-4 [-webkit-app-region:drag]"
               >
                 <button 
                   onClick={() => {
@@ -1563,8 +1550,7 @@ export default function Epsilon() {
                     setFlashcardsDeck([]);
                     setIsCardFlipped(false);
                   }} 
-                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors" 
-                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors [-webkit-app-region:no-drag]"
                 >
                   <ChevronLeft size={18} className="text-muted-foreground pr-0.5" />
                 </button>
@@ -1574,8 +1560,7 @@ export default function Epsilon() {
 
               {/* CONTENT */}
               <div 
-                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 scrollbar-hide z-0"
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className="flex-1 overflow-y-auto px-6 pb-24 pt-2 scrollbar-hide z-0 [-webkit-app-region:no-drag]"
               >
                 {/* 1. LOADING STATE */}
                 {generatingFlashcards && (
@@ -1912,8 +1897,7 @@ export default function Epsilon() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-card/95 backdrop-blur-md rounded-full px-4 py-2 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-border z-20" 
-              style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-card/95 backdrop-blur-md rounded-full px-4 py-2 shadow-[0_15px_40px_rgba(0,0,0,0.15)] border border-border z-20 [-webkit-app-region:no-drag]"
             >
               <button 
                 onClick={() => setView('home')} 
@@ -1945,14 +1929,12 @@ export default function Epsilon() {
             <>
               <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/20 z-40 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/20 z-40 backdrop-blur-sm [-webkit-app-region:no-drag]"
                 onClick={() => setIsSidebarOpen(false)}
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               />
               <motion.div
                 initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="absolute top-0 left-0 h-full w-64 bg-card/95 backdrop-blur-xl shadow-2xl z-50 flex flex-col border-r border-border"
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                className="absolute top-0 left-0 h-full w-64 bg-card/95 backdrop-blur-xl shadow-2xl z-50 flex flex-col border-r border-border [-webkit-app-region:no-drag]"
               >
                 <div className="p-4 h-20 flex items-center justify-between border-b border-border/50 mt-2">
                   <h2 className="font-bold text-foreground text-lg">History</h2>
