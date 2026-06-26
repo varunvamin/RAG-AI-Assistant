@@ -91,6 +91,7 @@ export default function Epsilon() {
   const [authError, setAuthError] = useState("");
   const { theme, setTheme } = useTheme();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const changeAccent = (color: string) => { /* Disabled to enforce theme */ };
 
   // Live Audio Solver State Variables
   const [isListening, setIsListening] = useState(false);
