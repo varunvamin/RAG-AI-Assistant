@@ -91,7 +91,6 @@ export default function Epsilon() {
   const [authError, setAuthError] = useState("");
   const { theme, setTheme } = useTheme();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
-  const changeAccent = (color: string) => { document.documentElement.style.setProperty('--primary', color); };
 
   // Live Audio Solver State Variables
   const [isListening, setIsListening] = useState(false);
@@ -190,7 +189,6 @@ export default function Epsilon() {
       setCurrentUser(data.user.username);
       localStorage.setItem("epsilon_current_user", data.user.username);
       if (data.user.theme) setTheme(data.user.theme);
-      if (data.user.accent_color) document.documentElement.style.setProperty('--primary', data.user.accent_color);
       
       if (authMode === 'signup') {
         setThreads({ general: [], flashcard: [], solver: [], coder: [] });
