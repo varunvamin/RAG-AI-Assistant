@@ -872,41 +872,41 @@ export default function Epsilon() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen w-screen bg-transparent p-2 font-sans antialiased select-none overflow-hidden">
+    <div className="flex items-center justify-center h-screen w-screen bg-background p-0 sm:p-4 font-sans antialiased select-none overflow-hidden">
       <video ref={videoRef} autoPlay playsInline muted className="hidden" />
 
       {!currentUser ? (
-        <div className="w-full h-full bg-slate-950 flex items-center justify-center relative p-8 rounded-[2.5rem] border border-slate-900 overflow-hidden shadow-2xl drag-region">
+        <div className="w-full h-full bg-background flex items-center justify-center relative p-8 rounded-[2.5rem] border border-border overflow-hidden shadow-2xl drag-region">
           {/* Stunning glowing background blobs */}
-          <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
           <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
           
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-sm bg-slate-900/45 border border-slate-800/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden z-10 no-drag"
+            className="w-full max-w-sm bg-card border border-border backdrop-blur-xl rounded-[2rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden z-10 no-drag"
           >
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-fuchsia-500 to-indigo-500" />
             
             {/* Logo */}
-            <div className="w-16 h-16 bg-gradient-to-br from-fuchsia-500/10 to-indigo-500/10 border border-fuchsia-500/30 rounded-2xl flex items-center justify-center mb-4">
-              <Sparkles className="text-fuchsia-400 animate-pulse" size={28} />
+            <div className="w-16 h-16 bg-gradient-to-br from-fuchsia-500/10 to-indigo-500/10 border border-primary/30 rounded-2xl flex items-center justify-center mb-4">
+              <Sparkles className="text-primary animate-pulse" size={28} />
             </div>
             
             <h1 className="text-2xl font-black text-white tracking-tight">Epsilon Engine</h1>
-            <p className="text-slate-400 text-xs mt-1 text-center max-w-[240px]">Advanced AI Screen Reader & Personal Study Portal</p>
+            <p className="text-muted-foreground text-xs mt-1 text-center max-w-[240px]">Advanced AI Screen Reader & Personal Study Portal</p>
             
             {/* Login / Signup Toggle */}
-            <div className="w-full bg-slate-950 p-1 rounded-xl flex items-center gap-1 mt-6 border border-slate-800/50">
+            <div className="w-full bg-background p-1 rounded-xl flex items-center gap-1 mt-6 border border-border">
               <button 
                 onClick={() => { setAuthMode('login'); setAuthError(""); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${authMode === 'login' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-slate-400 hover:text-slate-300'}`}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${authMode === 'login' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 Sign In
               </button>
               <button 
                 onClick={() => { setAuthMode('signup'); setAuthError(""); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${authMode === 'signup' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-slate-400 hover:text-slate-300'}`}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${authMode === 'signup' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 Create Account
               </button>
@@ -915,45 +915,45 @@ export default function Epsilon() {
             {/* Form */}
             <form onSubmit={handleAuthSubmit} className="w-full space-y-4 mt-6">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Username</label>
-                <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus-within:border-fuchsia-500 transition-colors">
-                  <User size={16} className="text-slate-500 shrink-0" />
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Username</label>
+                <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
+                  <User size={16} className="text-muted-foreground shrink-0" />
                   <input 
                     value={authUsername}
                     onChange={(e) => setAuthUsername(e.target.value)}
                     placeholder="Enter username" 
-                    className="bg-transparent border-none outline-none text-xs w-full text-slate-200 placeholder:text-slate-600 focus:outline-none"
+                    className="bg-transparent border-none outline-none text-xs w-full text-foreground placeholder:text-slate-600 focus:outline-none"
                   />
                 </div>
               </div>
               
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password</label>
-                <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 focus-within:border-fuchsia-500 transition-colors">
-                  <Code size={16} className="text-slate-500 shrink-0" />
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Password</label>
+                <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
+                  <Code size={16} className="text-muted-foreground shrink-0" />
                   <input 
                     type="password"
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
                     placeholder="••••••••" 
-                    className="bg-transparent border-none outline-none text-xs w-full text-slate-200 placeholder:text-slate-600 focus:outline-none"
+                    className="bg-transparent border-none outline-none text-xs w-full text-foreground placeholder:text-slate-600 focus:outline-none"
                   />
                 </div>
               </div>
               
               {authError && (
-                <p className="text-[10px] text-rose-450 font-bold uppercase tracking-wider text-center">{authError}</p>
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider text-center">{authError}</p>
               )}
               
               <button 
                 type="submit" 
-                className="w-full py-3 bg-fuchsia-500 hover:bg-fuchsia-600 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-fuchsia-500/20 mt-2 cursor-pointer"
+                className="w-full py-3 bg-primary hover:bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-primary/20 mt-2 cursor-pointer"
               >
                 {authMode === 'login' ? 'Authenticate Session' : 'Register Profile'}
               </button>
             </form>
             
-            <p className="text-[10px] text-slate-500 mt-6 text-center italic">
+            <p className="text-[10px] text-muted-foreground mt-6 text-center italic">
               🔒 Offline security active. Profiles are saved locally.
             </p>
           </motion.div>
@@ -963,7 +963,7 @@ export default function Epsilon() {
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="w-full h-full bg-card/95 border border-white/60 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden backdrop-blur-3xl relative"
+          className="w-full max-w-md mx-auto h-full sm:h-[95vh] bg-card border border-border sm:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden relative"
         >
         {/* ========================================================= */}
         {/* HOME VIEW (Epsilon Dashboard) */}
@@ -984,11 +984,18 @@ export default function Epsilon() {
                 <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm no-drag">
                   <Menu size={18} className="text-muted-foreground" />
                 </div>
-                <h2 className="text-lg font-bold text-foreground tracking-tight">Epsilon</h2>
+                <h2 className="text-lg font-bold text-foreground tracking-tight hidden">Epsilon</h2>
+                <button 
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center bg-card shadow-sm hover:bg-muted transition-colors no-drag ml-auto mr-2"
+                >
+                  {theme === 'dark' ? <Sun size={18} className="text-muted-foreground" /> : <Moon size={18} className="text-muted-foreground" />}
+                </button>
+
                 <button 
                   onClick={handleLogout} 
                   title={`Logged in as ${currentUser}. Click to logout.`}
-                  className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase no-drag"
+                  className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-primary uppercase no-drag"
                 >
                   {currentUser?.substring(0, 2)}
                 </button>
@@ -1000,30 +1007,29 @@ export default function Epsilon() {
               >
                 {/* Greeting Section */}
                 <div className="flex flex-col items-center justify-center text-center pb-2">
-                  <div className="w-20 h-20 bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 rounded-[2rem] flex items-center justify-center shadow-[0_10px_30px_rgba(217,70,239,0.3)] mb-4">
-                    <Bot size={40} className="text-white" strokeWidth={1.5} />
+                  <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mb-2">
+                    <Bot size={40} className="text-primary" strokeWidth={1.5} />
                   </div>
-                  <h1 className="text-2xl font-black text-foreground tracking-tight">Hi there, I'm Epsilon.</h1>
-                  <p className="text-sm text-muted-foreground font-medium mt-1">How can I assist you today?</p>
+                  <h1 className="text-3xl font-black text-foreground tracking-tight mt-4 px-2">Hi {currentUser || 'there'}! <br/> How can I help you today?</h1>
                 </div>
 
                 {/* Search */}
-                <div className="flex items-center gap-3 bg-muted rounded-2xl px-4 py-3 border border-border shadow-sm">
+                <div className="flex items-center gap-3 bg-muted rounded-2xl px-4 py-3 border border-border/50">
                   <Search size={18} className="text-muted-foreground" />
                   <input placeholder="Search modules..." className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder:text-muted-foreground" />
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 bg-muted p-1 rounded-full border border-border">
+                <div className="flex gap-2 bg-transparent p-1 overflow-x-auto scrollbar-hide -mx-2 px-2">
                   <button 
                     onClick={() => setActiveTab('chat')}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='chat' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-gray-700'}`}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='chat' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-muted-foreground hover:text-gray-700'}`}
                   >
                     Study Tools
                   </button>
                   <button 
                     onClick={() => setActiveTab('code')}
-                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='code' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-gray-700'}`}
+                    className={`flex-1 py-2 rounded-full text-xs font-bold transition-all ${activeTab==='code' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-muted-foreground hover:text-gray-700'}`}
                   >
                     Coding
                   </button>
@@ -1049,8 +1055,8 @@ export default function Epsilon() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Folder size={18} className="text-fuchsia-500 fill-fuchsia-500" />
-                            <span className="font-bold text-foreground text-sm group-hover:text-fuchsia-500 transition-colors">Flashcard Generator</span>
+                            <Folder size={18} className="text-primary fill-fuchsia-500" />
+                            <span className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">Flashcard Generator</span>
                           </div>
                           <MoreHorizontal size={16} className="text-gray-300" />
                         </div>
@@ -1155,7 +1161,7 @@ export default function Epsilon() {
                   <button 
                     onClick={handleLogout} 
                     title={`Logged in as ${currentUser}. Click to logout.`}
-                    className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center border border-fuchsia-200 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-fuchsia-600 uppercase no-drag"
+                    className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shadow-sm overflow-hidden hover:bg-fuchsia-200 transition-colors cursor-pointer text-xs font-black text-primary uppercase no-drag"
                   >
                     {currentUser?.substring(0, 2)}
                   </button>
@@ -1174,12 +1180,12 @@ export default function Epsilon() {
                     transition={{ delay: 0.2 }}
                     className="flex flex-col items-center justify-center text-center mt-6"
                   >
-                    <div className="w-24 h-24 bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-fuchsia-500/30 mb-6 relative">
+                    <div className="w-24 h-24 bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-primary/30 mb-6 relative">
                       <Sparkles size={40} className="text-white" />
                       <motion.div 
                          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
                          transition={{ repeat: Infinity, duration: 3 }}
-                         className="absolute inset-0 border-4 border-fuchsia-300 rounded-full blur-sm"
+                         className="absolute inset-0 border-4 border-primary/40 rounded-full blur-sm"
                       />
                     </div>
                     
@@ -1191,7 +1197,7 @@ export default function Epsilon() {
                     <div className="flex gap-2 justify-center w-full">
                       <button 
                         onClick={() => handleSend("Analyze everything currently visible on my screen.")}
-                        className="px-4 py-2 bg-fuchsia-50 text-fuchsia-600 text-[11px] font-bold rounded-full border border-fuchsia-100 hover:bg-fuchsia-100 transition-all flex items-center gap-1.5"
+                        className="px-4 py-2 bg-primary/10 text-primary text-[11px] font-bold rounded-full border border-fuchsia-100 hover:bg-primary/20 transition-all flex items-center gap-1.5"
                       >
                         <ScanSearch size={14} />
                         Analyze
@@ -1226,8 +1232,8 @@ export default function Epsilon() {
                         <div
                           className={`max-w-[85%] p-4 text-[14px] leading-relaxed shadow-sm ${
                             msg.role === "user"
-                              ? "bg-fuchsia-500 text-white rounded-[1.5rem] rounded-br-sm shadow-fuchsia-500/20"
-                              : "bg-card border border-border text-foreground rounded-[1.5rem] rounded-bl-sm shadow-sm"
+                              ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm shadow-sm"
+                              : "bg-card border border-border/50 text-foreground rounded-2xl rounded-bl-sm shadow-sm"
                           }`}
                         >
                           <ReactMarkdown 
@@ -1262,42 +1268,42 @@ export default function Epsilon() {
 
               {/* FLOATING INPUT BOX (Only in Chat View) */}
               <div 
-                className="absolute bottom-6 left-6 right-6 z-20 flex flex-col gap-2 no-drag"
+                className="absolute bottom-4 left-4 right-4 z-20 flex flex-col gap-2 no-drag"
               >
                 {isListening && (
-                  <div className="bg-slate-955/90 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2 relative shadow-lg shadow-fuchsia-500/10 animate-in slide-in-from-bottom-2 duration-300">
+                  <div className="bg-slate-955/90 backdrop-blur-md border border-border rounded-2xl p-4 flex flex-col gap-2 relative shadow-lg shadow-fuchsia-500/10 animate-in slide-in-from-bottom-2 duration-300">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                         </span>
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Live Meeting Transcribing</span>
+                        <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Live Meeting Transcribing</span>
                       </div>
                       
                       {/* Pulse Equalizer */}
                       <div className="flex gap-0.5 items-end h-3">
-                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-2" style={{ animationDelay: '0.1s' }} />
-                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-3" style={{ animationDelay: '0.3s' }} />
-                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-1.5" style={{ animationDelay: '0.5s' }} />
-                        <span className="w-0.5 bg-fuchsia-500 animate-bounce h-2.5" style={{ animationDelay: '0.2s' }} />
+                        <span className="w-0.5 bg-primary animate-bounce h-2" style={{ animationDelay: '0.1s' }} />
+                        <span className="w-0.5 bg-primary animate-bounce h-3" style={{ animationDelay: '0.3s' }} />
+                        <span className="w-0.5 bg-primary animate-bounce h-1.5" style={{ animationDelay: '0.5s' }} />
+                        <span className="w-0.5 bg-primary animate-bounce h-2.5" style={{ animationDelay: '0.2s' }} />
                       </div>
                     </div>
-                    <p className="text-xs text-slate-200 italic leading-relaxed line-clamp-2 max-h-12 overflow-y-auto scrollbar-hide font-medium">
+                    <p className="text-xs text-foreground italic leading-relaxed line-clamp-2 max-h-12 overflow-y-auto scrollbar-hide font-medium">
                       {liveTranscript || "Listening... Speak or play meeting audio to auto-solve."}
                     </p>
                   </div>
                 )}
                 {attachedImage && (
                   <div className="relative self-start ml-2">
-                    <img src={attachedImage} alt="Attachment" className="h-16 w-16 object-cover rounded-xl border-2 border-fuchsia-500 shadow-md" />
+                    <img src={attachedImage} alt="Attachment" className="h-16 w-16 object-cover rounded-xl border-2 border-primary shadow-md" />
                     <button onClick={() => setAttachedImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-sm">
                       <X size={10} strokeWidth={3} />
                     </button>
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 bg-card rounded-[2rem] p-2 shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-border relative">
+                <div className="flex items-center gap-2 bg-card rounded-full p-2 shadow-2xl shadow-black/10 border border-border/60 relative">
                   
                   {/* File Upload Button */}
                   <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0">
@@ -1307,7 +1313,7 @@ export default function Epsilon() {
 
                   {/* Sparkles Context Menu */}
                   <div className="relative shrink-0">
-                    <button onClick={() => setShowActionMenu(!showActionMenu)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${showActionMenu ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-fuchsia-50 text-fuchsia-500 hover:bg-fuchsia-100'}`}>
+                    <button onClick={() => setShowActionMenu(!showActionMenu)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${showActionMenu ? 'bg-primary text-white shadow-md' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}>
                       <Sparkles size={18} />
                     </button>
                     
@@ -1341,7 +1347,7 @@ export default function Epsilon() {
                   <button
                     type="button"
                     onClick={toggleListening}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isListening ? 'bg-fuchsia-500 text-white' : 'bg-gray-150 text-muted-foreground hover:bg-gray-200'}`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isListening ? 'bg-primary text-white' : 'bg-gray-150 text-muted-foreground hover:bg-gray-200'}`}
                     title={isListening ? "Stop listening to live meeting audio" : "Start listening to live meeting audio"}
                   >
                     {isListening ? (
@@ -1364,7 +1370,7 @@ export default function Epsilon() {
                   <button
                     onClick={() => handleSend()}
                     disabled={(!input.trim() && !attachedImage) || isLoading}
-                    className="w-10 h-10 bg-fuchsia-500 rounded-full flex items-center justify-center text-white shadow-md shadow-fuchsia-500/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer shrink-0"
+                    className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white shadow-md shadow-primary/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer shrink-0"
                   >
                     <Send size={16} className="-ml-0.5" />
                   </button>
@@ -1401,8 +1407,8 @@ export default function Epsilon() {
               >
                 {savedItems.length === 0 ? (
                   <div className="bg-card border border-border p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-10">
-                    <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
-                      <Bookmark size={28} className="text-fuchsia-400" />
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                      <Bookmark size={28} className="text-primary" />
                     </div>
                     <h3 className="font-bold text-foreground text-lg mb-2">No Saved Items Yet</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -1418,7 +1424,7 @@ export default function Epsilon() {
                           onClick={() => setExpandedBookmarkId(expandedBookmarkId === item.id ? null : item.id)}
                         >
                           <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-fuchsia-500 uppercase tracking-wider mb-1">{item.category}</span>
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">{item.category}</span>
                             <span className="text-sm font-bold text-foreground">{item.title}</span>
                           </div>
                           <div className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center transition-transform ${expandedBookmarkId === item.id ? 'rotate-180' : ''}`}>
@@ -1574,7 +1580,7 @@ export default function Epsilon() {
                       <motion.div 
                         animate={{ scale: [0.8, 1.1, 0.8] }}
                         transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                        className="absolute inset-0 m-auto w-8 h-8 bg-fuchsia-500 rounded-full flex items-center justify-center text-white"
+                        className="absolute inset-0 m-auto w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white"
                       >
                         <Sparkles size={14} />
                       </motion.div>
@@ -1624,8 +1630,8 @@ export default function Epsilon() {
                       if (combinedChats.length === 0) {
                         return (
                           <div className="bg-card border border-border p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center mt-6">
-                            <div className="w-16 h-16 bg-fuchsia-50 rounded-full flex items-center justify-center mb-4">
-                              <MessageCircle size={28} className="text-fuchsia-400" />
+                            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                              <MessageCircle size={28} className="text-primary" />
                             </div>
                             <h3 className="font-bold text-foreground text-base mb-1.5">No Conversation History</h3>
                             <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mb-6">
@@ -1634,7 +1640,7 @@ export default function Epsilon() {
                             <div className="flex flex-col w-full gap-2">
                               <button 
                                 onClick={() => { setMode('general'); setView('chat'); }}
-                                className="w-full py-2.5 bg-fuchsia-50 hover:bg-fuchsia-100 text-fuchsia-600 text-xs font-bold rounded-xl transition-all"
+                                className="w-full py-2.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-all"
                               >
                                 Start General Chat
                               </button>
@@ -1660,7 +1666,7 @@ export default function Epsilon() {
                           <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Available Conversations ({combinedChats.length})</h4>
                           {combinedChats.map((chat) => {
                             const catLabel = chat.category === 'coder' ? 'Code Debugger' : chat.category === 'solver' ? 'Step-by-Step Solver' : 'General Chat';
-                            const badgeColor = chat.category === 'coder' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : chat.category === 'solver' ? 'bg-amber-50 text-amber-600 border-amber-100/50' : 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100/50';
+                            const badgeColor = chat.category === 'coder' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' : chat.category === 'solver' ? 'bg-amber-50 text-amber-600 border-amber-100/50' : 'bg-primary/10 text-primary border-fuchsia-100/50';
                             
                             const triggerFlashcardGen = async () => {
                               setGeneratingFlashcards(true);
@@ -1691,7 +1697,7 @@ export default function Epsilon() {
                               <div 
                                 key={chat.id} 
                                 onClick={triggerFlashcardGen}
-                                className="bg-card border border-border p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-fuchsia-200 transition-all flex items-center justify-between cursor-pointer group"
+                                className="bg-card border border-border p-4 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex items-center justify-between cursor-pointer group"
                               >
                                 <div className="flex flex-col gap-1.5 max-w-[75%]">
                                   <div className="flex items-center gap-2">
@@ -1704,10 +1710,10 @@ export default function Epsilon() {
                                       </span>
                                     )}
                                   </div>
-                                  <span className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-fuchsia-600 transition-colors">{chat.title}</span>
+                                  <span className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">{chat.title}</span>
                                   <span className="text-[10px] text-muted-foreground">{chat.messages.length} conversational statements</span>
                                 </div>
-                                <button className="w-8 h-8 rounded-full bg-fuchsia-50 group-hover:bg-fuchsia-500 group-hover:text-white text-fuchsia-500 flex items-center justify-center transition-all shrink-0">
+                                <button className="w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white text-primary flex items-center justify-center transition-all shrink-0">
                                   <Sparkles size={14} className="group-hover:animate-pulse" />
                                 </button>
                               </div>
@@ -1726,11 +1732,11 @@ export default function Epsilon() {
                     <div className="flex items-center justify-between">
                       <button 
                         onClick={() => { setFlashcardsDeck([]); setIsCardFlipped(false); }} 
-                        className="text-xs font-bold text-muted-foreground hover:text-fuchsia-500 transition-colors flex items-center gap-1"
+                        className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
                       >
                         <ChevronLeft size={16} /> Choose Another Chat
                       </button>
-                      <span className="text-[10px] font-extrabold text-fuchsia-500 uppercase tracking-widest bg-fuchsia-50 border border-fuchsia-100 px-3 py-1 rounded-full">
+                      <span className="text-[10px] font-extrabold text-primary uppercase tracking-widest bg-primary/10 border border-fuchsia-100 px-3 py-1 rounded-full">
                         Study Session
                       </span>
                     </div>
@@ -1765,8 +1771,8 @@ export default function Epsilon() {
                         {/* Front Side: Question */}
                         <div className="absolute inset-0 w-full h-full rounded-[2rem] bg-gradient-to-br from-white to-gray-50 flex flex-col justify-between p-6 backface-hidden">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-fuchsia-50 flex items-center justify-center">
-                              <Bot size={10} className="text-fuchsia-500" />
+                            <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Bot size={10} className="text-primary" />
                             </span>
                             <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest">Question card</span>
                           </div>
@@ -1825,7 +1831,7 @@ export default function Epsilon() {
                           }
                         }}
                         disabled={currentCardIndex === flashcardsDeck.length - 1}
-                        className="flex-1 py-3 bg-fuchsia-500 hover:bg-fuchsia-600 active:scale-95 disabled:opacity-50 disabled:hover:bg-fuchsia-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-fuchsia-500/20"
+                        className="flex-1 py-3 bg-primary hover:bg-primary hover:bg-primary-hover active:scale-95 disabled:opacity-50 disabled:hover:bg-primary text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-primary/20"
                       >
                         Next Card <ChevronLeft size={16} className="rotate-180" />
                       </button>
@@ -1865,7 +1871,7 @@ export default function Epsilon() {
                             setSuccessFeedback("Downloaded Anki Deck!");
                             setTimeout(() => setSuccessFeedback(""), 2000);
                           }}
-                          className="flex-1 py-2.5 bg-fuchsia-50 hover:bg-fuchsia-100 text-fuchsia-600 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
+                          className="flex-1 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
                         >
                           <Download size={14} /> Export to Anki
                         </button>
@@ -1901,7 +1907,7 @@ export default function Epsilon() {
             >
               <button 
                 onClick={() => setView('home')} 
-                className={`p-3 rounded-full transition-all ${view==='home' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-muted-foreground'}`}
+                className={`p-3 rounded-full transition-all ${view==='home' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-muted-foreground hover:text-muted-foreground'}`}
               >
                 <Home size={20} />
               </button>
@@ -1913,7 +1919,7 @@ export default function Epsilon() {
               </button>
               <button 
                 onClick={() => setView('bookmarks')} 
-                className={`p-3 rounded-full transition-all ${view==='bookmarks' ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' : 'text-muted-foreground hover:text-muted-foreground'}`}
+                className={`p-3 rounded-full transition-all ${view==='bookmarks' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-muted-foreground hover:text-muted-foreground'}`}
               >
                 <Bookmark size={20} />
               </button>
@@ -1966,7 +1972,7 @@ export default function Epsilon() {
                           {activeMsgs.length > 0 && (
                             <div 
                               onClick={() => { setMode(m as any); setView('chat'); setIsSidebarOpen(false); }}
-                              className="text-[13px] font-bold text-fuchsia-600 truncate p-3 bg-fuchsia-50/50 hover:bg-fuchsia-100 rounded-xl cursor-pointer transition-colors border border-fuchsia-200"
+                              className="text-[13px] font-bold text-primary truncate p-3 bg-primary/10/50 hover:bg-primary/20 rounded-xl cursor-pointer transition-colors border border-primary/30"
                             >
                               {activeTitle} (Active)
                             </div>
@@ -1976,7 +1982,7 @@ export default function Epsilon() {
                             <div 
                               key={pastChat.id}
                               onClick={() => loadPastChat(pastChat.id)}
-                              className="text-[13px] font-medium text-muted-foreground truncate p-3 bg-muted hover:bg-fuchsia-50 hover:text-fuchsia-600 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
+                              className="text-[13px] font-medium text-muted-foreground truncate p-3 bg-muted hover:bg-primary/10 hover:text-primary rounded-xl cursor-pointer transition-colors border border-transparent hover:border-fuchsia-100"
                             >
                               {pastChat.title}
                             </div>

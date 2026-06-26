@@ -1,52 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  /* Light Theme Base Colors */
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #0f172a; /* slate-900 */
+  /* Premium Light Theme Base Colors */
+  --background: #f4f8fb; /* Soft, slightly cool off-white */
+  --foreground: #111827; /* gray-900 */
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #111827;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --muted: #f1f5f9; /* slate-100 */
-  --muted-foreground: #64748b; /* slate-500 */
-  --border: #e2e8f0; /* slate-200 */
-  --input: #e2e8f0;
-  --ring: #94a3b8; /* slate-400 */
+  --popover-foreground: #111827;
+  --muted: #f3f4f6; /* gray-100 */
+  --muted-foreground: #6b7280; /* gray-500 */
+  --border: #e5e7eb; /* gray-200 */
+  --input: #e5e7eb;
+  --ring: #9ca3af; /* gray-400 */
   
-  /* Dynamic Primary Color (Defaults to Violet) */
-  --primary: #8b5cf6; /* violet-500 */
+  /* Dynamic Primary Color (Soft Sky Blue) */
+  --primary: #3b82f6; /* blue-500 */
   --primary-foreground: #ffffff;
-  --primary-hover: #7c3aed; /* violet-600 */
+  --primary-hover: #2563eb; /* blue-600 */
 
   /* Secondary */
-  --secondary: #f1f5f9; /* slate-100 */
-  --secondary-foreground: #0f172a;
+  --secondary: #e0f2fe; /* sky-100 */
+  --secondary-foreground: #0369a1; /* sky-700 */
 
-  --radius: 0.75rem;
+  --radius: 1.5rem; /* More rounded, premium feel */
 }
 
 .dark {
-  /* Dark Theme Base Colors */
-  --background: #09090b; /* zinc-950 */
-  --foreground: #fafafa; /* zinc-50 */
-  --card: #18181b; /* zinc-900 */
-  --card-foreground: #fafafa;
-  --popover: #18181b;
-  --popover-foreground: #fafafa;
-  --muted: #27272a; /* zinc-800 */
-  --muted-foreground: #a1a1aa; /* zinc-400 */
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #52525b; /* zinc-600 */
+  /* Premium Dark Theme Base Colors */
+  --background: #0b0f19; /* Deep cool black */
+  --foreground: #f9fafb; /* gray-50 */
+  --card: #111827; /* gray-900 */
+  --card-foreground: #f9fafb;
+  --popover: #111827;
+  --popover-foreground: #f9fafb;
+  --muted: #1f2937; /* gray-800 */
+  --muted-foreground: #9ca3af; /* gray-400 */
+  --border: #374151; /* gray-700 */
+  --input: #1f2937;
+  --ring: #4b5563; /* gray-600 */
 
-  /* Dynamic Primary Color (Defaults to Violet) */
-  --primary: #8b5cf6; /* violet-500 */
+  /* Dynamic Primary Color */
+  --primary: #3b82f6; /* blue-500 */
   --primary-foreground: #ffffff;
-  --primary-hover: #7c3aed; /* violet-600 */
+  --primary-hover: #60a5fa; /* blue-400 */
 
-  --secondary: #27272a; /* zinc-800 */
-  --secondary-foreground: #fafafa;
+  --secondary: #1e3a8a; /* blue-900 */
+  --secondary-foreground: #bfdbfe; /* blue-200 */
 }
 
 @theme inline {
