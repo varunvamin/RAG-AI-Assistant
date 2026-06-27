@@ -592,10 +592,18 @@ export default function Epsilon() {
         screenshot = canvas.toDataURL("image/jpeg", 0.7);
       }
 
-      const response = await fetch("/api/chat", {
+      let endpoint = "/api/chat";
+      let requestBody: any = { message: userMessage, image: screenshot, history: threads[currentMode] || [], mode: currentMode };
+
+      if (userMessage.trim().toLowerCase().startsWith('/search')) {
+        endpoint = "/api/search";
+        requestBody = { query: userMessage.replace(/^\/search\s*/i, '').trim() };
+      }
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, image: screenshot, history: threads[currentMode] || [], mode: currentMode }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

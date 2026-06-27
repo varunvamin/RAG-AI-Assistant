@@ -1,10 +1,12 @@
-const { app, BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen, globalShortcut } = require('electron');
 const path = require('path');
+
+let mainWindow = null;
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 450,
     height: 700,
     center: true,             // This will put it right in the middle
@@ -53,9 +55,26 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
+  // Register Global Hotkey to toggle Assistant
+  globalShortcut.register('CommandOrControl+Space', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    }
+  });
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on('will-quit', () => {
+  // Unregister all shortcuts when app quits
+  globalShortcut.unregisterAll();
 });
 
 app.on('window-all-closed', function () {
