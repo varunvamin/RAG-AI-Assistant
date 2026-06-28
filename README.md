@@ -1,5 +1,13 @@
 # 🎓 Epsilon: RAG-Powered AI Study Assistant & Desktop Vision Companion
 
+<p align="left">
+  <img src="https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/Electron-191970?style=for-the-badge&logo=Electron&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" />
+  <img src="https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white" />
+</p>
+
 Epsilon is a state-of-the-art academic suite combining a robust, high-performance Retrieval-Augmented Generation (RAG) backend web portal with an advanced, floating Next.js + Electron desktop vision assistant. 
 
 Epsilon operates seamlessly across your system, analyzing your active workspace or browser tabs, explaining complex code, breaking down equations step-by-step, generating 3D-interactive flashcard decks, and compiling website references into beautiful, publication-grade academic PDFs.
