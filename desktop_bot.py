@@ -99,7 +99,7 @@ class FloatingStudyBot(ctk.CTk):
             
             self.after(0, lambda: self.on_processing_complete(len(chunks), page_count, os.path.basename(file_path)))
         except Exception as e:
-            self.after(0, lambda: self.status_label.configure(text=f"Error: {str(e)[:30]}...", text_color="#EF4444"))
+            self.after(0, lambda err=e: self.status_label.configure(text=f"Error: {str(err)[:30]}...", text_color="#EF4444"))
             self.after(0, lambda: self.upload_btn.configure(state="normal"))
 
     def on_processing_complete(self, chunks_count, page_count, filename):
@@ -131,7 +131,7 @@ class FloatingStudyBot(ctk.CTk):
             
             self.after(0, lambda: self.log(answer))
         except Exception as e:
-            self.after(0, lambda: self.log(f"Sorry, I ran into an error: {str(e)}"))
+            self.after(0, lambda err=e: self.log(f"Sorry, I ran into an error: {str(err)}"))
         finally:
             self.is_processing = False
 
