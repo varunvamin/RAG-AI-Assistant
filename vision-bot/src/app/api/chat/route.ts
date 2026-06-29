@@ -5,6 +5,16 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+/**
+ * Handles conversational queries using Groq's llama-3.3-70b-versatile model.
+ * 
+ * Features:
+ * - Ingests message history array to maintain conversational context
+ * - Streams responses back to the client using a ReadableStream
+ * 
+ * @param req - The NextRequest containing the JSON body with 'messages' array
+ * @returns A streaming NextResponse representing the LLM's generated reply
+ */
 export async function POST(req: NextRequest) {
   try {
     const { image, message, history = [], mode = 'general' } = await req.json();
