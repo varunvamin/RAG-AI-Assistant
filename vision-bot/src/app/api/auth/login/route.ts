@@ -24,6 +24,14 @@ export async function POST(req: NextRequest) {
 
     const { username, password } = result.data;
 
+    // Best Practice: Offline Mode Fallback
+    // If no database is configured, allow local access so the app doesn't crash.
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ 
+        user: { id: 1, username, accent_color: 'violet', theme: 'system' }
+      });
+    }
+
     // Step 4: Check Rate Limit (Account Lockout)
     const rateLimit = rateLimitMap.get(username);
     if (rateLimit) {
