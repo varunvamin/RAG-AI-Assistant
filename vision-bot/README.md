@@ -1,17 +1,18 @@
-# 🖥️ Epsilon Desktop Vision Client
+# 🖥️ Epsilon Engine (Desktop & Web Client)
 
-This is the Next.js + Electron companion desktop application for the Epsilon AI Study Suite. It provides a sleek, semi-transparent overlay window that runs directly on your desktop, enabling visual context-awareness, coding acceleration, step-by-step math solving, interactive 3D studying, and smart PDF generation.
+Epsilon is a fully synchronized Next.js hybrid application that runs as a sleek, semi-transparent desktop overlay (via Electron) and a responsive mobile web-app (via Vercel). Powered by a secure Neon PostgreSQL backend, it provides visual context-awareness, math solving, interactive 3D studying, and smart PDF generation.
 
 ---
 
 ## 🚀 Features
 
+* **Cloud Sync (Offline-First)**: Automatically synchronizes your active chats, 3D flashcards, and bookmarked notes between your Desktop app and mobile Vercel deployment using Neon PostgreSQL, falling back to local cache if offline.
 * **Visual Intelligence**: Real-time monitor-screen captures with dedicated context exclusion (ignores the Epsilon GUI to scan background active windows).
-* **Robust Voice Solver & Fallback VAD**: Features a Voice Activity Detection (VAD) engine that calibrates background noise floors dynamically. If standard Web Speech recognition experiences `"network"` drops (highly common in sandboxed environments like Electron), it seamlessly hot-swaps in real-time to a local MediaRecorder pipeline that transcribes audio via Groq's high-speed Whisper API (`whisper-large-v3-turbo`) upon speech breaks.
-* **Dynamic Chat Naming**: Automatically and continuously names chat threads in real-time using `llama-3.1-8b-instant` as the conversation evolves.
-* **3D Flashcard Studier**: Loads conversation histories (active & past) and compiles them into elegant double-sided cards that flip with premium 3D CSS animations.
-* **Professional PDF Generator**: Turns internet references and video transcripts into stunning academic publications, matching high-end graphic design templates.
-* **Specialized Code Debugger**: Strictly monitors background code, explains logics, and politely redirects general questions.
+* **Robust Voice Solver & Fallback VAD**: Features a Voice Activity Detection (VAD) engine that calibrates background noise floors dynamically. If standard Web Speech recognition experiences `"network"` drops, it seamlessly hot-swaps to a local MediaRecorder pipeline transcribing audio via Groq's high-speed Whisper API upon speech breaks.
+* **Dynamic Chat Naming**: Automatically names chat threads in real-time using `llama-3.1-8b-instant`.
+* **3D Flashcard Studier**: Compiles conversation histories into elegant double-sided cards that flip with premium 3D CSS animations.
+* **Professional PDF Generator**: Turns internet references and video transcripts into stunning academic publications.
+* **Specialized Code Debugger**: Strictly monitors background code and explains logics.
 
 ---
 
