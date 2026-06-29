@@ -25,9 +25,13 @@ npm install
 ```
 
 ### 2. Configure Local Keys
-Create a `.env.local` file in this directory and populate it with your key:
+Create a `.env.local` file in this directory and populate it with your keys:
 ```env
+# Required for AI Features
 GROQ_API_KEY=your_groq_api_key_here
+
+# Required for Secure Authentication (Neon PostgreSQL)
+DATABASE_URL=postgresql://user:password@endpoint.neon.tech/neondb?sslmode=require
 ```
 
 ### 3. Launch the Application (Next.js + Electron)
