@@ -117,3 +117,32 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* --- Mobile Responsiveness Sweep (Phase 4) --- */
+@media (max-width: 768px) {
+  /* Ensure the app fits mobile screens correctly */
+  body, html {
+    overflow-x: hidden;
+    height: 100%;
+  }
+  
+  /* Make the main layout stack vertically if it uses flex-row */
+  main.flex-row, div.flex-row {
+    flex-direction: column !important;
+  }
+
+  /* Make sidebars take full width instead of fixed widths */
+  .w-64, .w-72, .w-80 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Adjust padding and sizing for smaller screens */
+  .p-8 { padding: 1rem !important; }
+  .p-6 { padding: 0.75rem !important; }
+  
+  /* Fix 3D cards getting cut off on mobile */
+  .perspective-1000 {
+    perspective: none !important;
+  }
+}
