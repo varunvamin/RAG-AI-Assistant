@@ -13,6 +13,18 @@ const rateLimitMap = new Map<string, { count: number; lockedUntil: number }>();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
+/**
+ * Authenticates a user and establishes a session.
+ * 
+ * Features:
+ * - Validates input structure using Zod
+ * - Verifies hashed passwords using bcryptjs
+ * - Implements account lockouts after 5 failed attempts (15-minute lock)
+ * - Falls back to offline-mode safely if no database is configured
+ * 
+ * @param req - The NextRequest containing the JSON body with username and password
+ * @returns A NextResponse containing the user payload or generic 401 error
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
