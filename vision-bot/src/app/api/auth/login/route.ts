@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -28,8 +29,9 @@ export async function POST(req: NextRequest) {
 
     const user = users[0];
 
-    // TODO: Step 3 will replace this basic check with bcrypt
-    if (user.password_hash !== password) {
+    // Step 3: Verify password hash
+    const isValid = await bcrypt.compare(password, user.password_hash);
+    if (!isValid) {
       // GENERIC ERROR MESSAGE: Same error as above
       return NextResponse.json({ error: 'Incorrect username or password' }, { status: 401 });
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -25,8 +26,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Registration failed. Please try a different username.' }, { status: 409 });
     }
 
-    // TODO: Step 3 will replace this with bcrypt
-    const password_hash = password;
+    // Step 3: Hash password with bcrypt
+    const saltRounds = 10;
+    const password_hash = await bcrypt.hash(password, saltRounds);
 
     const newUsers = await sql`
       INSERT INTO users (username, password_hash, accent_color, theme)
