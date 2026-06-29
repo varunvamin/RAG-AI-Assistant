@@ -112,33 +112,56 @@ export default function Epsilon() {
     isListeningRef.current = isListening;
   }, [isListening]);
 
-  // Load User Data Partition from LocalStorage
-  const loadUserProfile = (username: string) => {
+  // Load User Data Partition (Cloud First, LocalStorage Fallback)
+  const loadUserProfile = async (username: string) => {
     try {
-      const data = localStorage.getItem(`epsilon_profile_${username}`);
-      if (data) {
-        const parsed = JSON.parse(data);
+      // 1. Instantly load from local cache for speed
+      const localData = localStorage.getItem(`epsilon_profile_${username}`);
+      if (localData) {
+        const parsed = JSON.parse(localData);
         if (parsed.threads) setThreads(parsed.threads);
         if (parsed.pastChats) setPastChats(parsed.pastChats);
         if (parsed.savedItems) setSavedItems(parsed.savedItems);
         if (parsed.threadTitles) setThreadTitles(parsed.threadTitles);
       } else {
-        // Reset states for fresh user profile
         setThreads({ general: [], flashcard: [], solver: [], coder: [] });
         setPastChats([]);
         setSavedItems([]);
         setThreadTitles({});
       }
+
+      // 2. Fetch latest from Cloud Database in background
+      const res = await fetch(`/api/sync?username=${username}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.profileData && Object.keys(data.profileData).length > 0) {
+          const parsed = typeof data.profileData === 'string' ? JSON.parse(data.profileData) : data.profileData;
+          if (parsed.threads) setThreads(parsed.threads);
+          if (parsed.pastChats) setPastChats(parsed.pastChats);
+          if (parsed.savedItems) setSavedItems(parsed.savedItems);
+          if (parsed.threadTitles) setThreadTitles(parsed.threadTitles);
+          // Update local cache
+          localStorage.setItem(`epsilon_profile_${username}`, JSON.stringify(parsed));
+        }
+      }
     } catch (e) {
-      console.error("Failed to load user profile:", e);
+      console.error("Cloud sync load failed, falling back to local:", e);
     }
   };
 
-  // Auto-Save User Profile on State Modifications
+  // Auto-Save User Profile on State Modifications (Debounced Cloud Sync)
   useEffect(() => {
     if (currentUser) {
       const profileData = { threads, pastChats, savedItems, threadTitles };
+      // 1. Instant local save
       localStorage.setItem(`epsilon_profile_${currentUser}`, JSON.stringify(profileData));
+      
+      // 2. Fire-and-forget background cloud save
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, profileData }),
+      }).catch(err => console.warn("Cloud save pending (offline mode)."));
     }
   }, [threads, pastChats, savedItems, threadTitles, currentUser]);
 
