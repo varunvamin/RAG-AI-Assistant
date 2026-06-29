@@ -8,6 +8,18 @@ const registerSchema = z.object({
   password: z.string().min(6).max(100),
 });
 
+/**
+ * Registers a new user into the system.
+ * 
+ * Features:
+ * - Sanitizes alphanumeric usernames via Zod
+ * - Hashes and salts passwords securely with bcrypt
+ * - Avoids leaking user enumeration data on collision
+ * - Supports an offline fallback bypass if DATABASE_URL is unconfigured
+ * 
+ * @param req - The NextRequest containing the JSON body with desired username and password
+ * @returns A NextResponse containing the created user payload or 409 conflict error
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
