@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
+  password: z.string().min(6).max(100),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json();
+    const body = await req.json();
+    const result = registerSchema.safeParse(body);
 
-    if (!username || !password) {
-      return NextResponse.json({ error: 'Invalid input provided' }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json({ error: 'Registration failed. Please try a different username or stronger password.' }, { status: 400 });
     }
+
+    const { username, password } = result.data;
 
     // Step 1: Check if user exists
     const existingUsers = await sql`SELECT id FROM users WHERE username = ${username}`;

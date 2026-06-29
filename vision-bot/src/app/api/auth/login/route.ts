@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { z } from 'zod';
+
+const loginSchema = z.object({
+  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
+  password: z.string().min(6).max(100),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json();
+    const body = await req.json();
+    const result = loginSchema.safeParse(body);
 
-    if (!username || !password) {
+    if (!result.success) {
       return NextResponse.json({ error: 'Incorrect username or password' }, { status: 400 });
     }
+
+    const { username, password } = result.data;
 
     // Step 1: Query the user from Neon DB
     const users = await sql`SELECT * FROM users WHERE username = ${username}`;
