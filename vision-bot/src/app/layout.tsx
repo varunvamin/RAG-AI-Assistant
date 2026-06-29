@@ -14,8 +14,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lumina - Intelligent Desktop Assistant",
-  description: "Your AI-powered context-aware screen assistant.",
+  title: "Epsilon Engine - Intelligent Desktop Assistant",
+  description: "Your AI-powered context-aware screen assistant and robust voice solver.",
+  openGraph: {
+    title: "Epsilon Engine",
+    description: "Your AI-powered context-aware screen assistant.",
+    type: "website",
+    siteName: "Epsilon Engine",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Epsilon Engine",
+    description: "Intelligent Desktop Assistant",
+  },
 };
 
 export default function RootLayout({
