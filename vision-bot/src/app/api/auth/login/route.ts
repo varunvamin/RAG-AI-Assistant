@@ -8,6 +8,11 @@ const loginSchema = z.object({
   password: z.string().min(6).max(100),
 });
 
+// Basic in-memory rate limiting (Note: resets on server restart)
+const rateLimitMap = new Map<string, { count: number; lockedUntil: number }>();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -19,11 +24,26 @@ export async function POST(req: NextRequest) {
 
     const { username, password } = result.data;
 
+    // Step 4: Check Rate Limit (Account Lockout)
+    const rateLimit = rateLimitMap.get(username);
+    if (rateLimit) {
+      if (rateLimit.lockedUntil > Date.now()) {
+        // GENERIC ERROR: Don't reveal lockout status to prevent enumeration
+        return NextResponse.json({ error: 'Incorrect username or password' }, { status: 401 });
+      }
+    }
+
     // Step 1: Query the user from Neon DB
     const users = await sql`SELECT * FROM users WHERE username = ${username}`;
     
     if (users.length === 0) {
-      // GENERIC ERROR MESSAGE: Do not leak that the username doesn't exist
+      // Record failed attempt even if user doesn't exist
+      const current = rateLimitMap.get(username) || { count: 0, lockedUntil: 0 };
+      current.count += 1;
+      if (current.count >= MAX_ATTEMPTS) {
+        current.lockedUntil = Date.now() + LOCKOUT_MINUTES * 60 * 1000;
+      }
+      rateLimitMap.set(username, current);
       return NextResponse.json({ error: 'Incorrect username or password' }, { status: 401 });
     }
 
@@ -32,9 +52,18 @@ export async function POST(req: NextRequest) {
     // Step 3: Verify password hash
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) {
-      // GENERIC ERROR MESSAGE: Same error as above
+      // Record failed attempt
+      const current = rateLimitMap.get(username) || { count: 0, lockedUntil: 0 };
+      current.count += 1;
+      if (current.count >= MAX_ATTEMPTS) {
+        current.lockedUntil = Date.now() + LOCKOUT_MINUTES * 60 * 1000;
+      }
+      rateLimitMap.set(username, current);
       return NextResponse.json({ error: 'Incorrect username or password' }, { status: 401 });
     }
+
+    // Reset rate limit on successful login
+    rateLimitMap.delete(username);
 
     return NextResponse.json({ 
       user: { 
