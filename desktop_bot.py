@@ -72,6 +72,7 @@ class FloatingStudyBot(ctk.CTk):
         self.send_btn.pack(side="right")
 
     def log(self, message, role="bot"):
+        """Displays a new message in the chat area with the appropriate sender label."""
         self.chat_area.configure(state="normal")
         if role == "user":
             self.chat_area.insert("end", f"👤 You:\n{message}\n\n")
