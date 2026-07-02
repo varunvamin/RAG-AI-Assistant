@@ -82,6 +82,7 @@ class FloatingStudyBot(ctk.CTk):
         self.chat_area.see("end")
 
     def upload_pdf(self):
+        """Opens a file dialog to select a PDF and starts the background processing thread."""
         file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
         if file_path:
             self.status_label.configure(text=f"Processing: {os.path.basename(file_path)}...", text_color="#FBBF24")
