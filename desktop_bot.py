@@ -93,6 +93,7 @@ class FloatingStudyBot(ctk.CTk):
             thread.start()
 
     def process_pdf_thread(self, file_path):
+        """Reads the PDF file and initializes the RAG pipeline in a background thread."""
         try:
             with open(file_path, "rb") as f:
                 pdf_bytes = f.read()
