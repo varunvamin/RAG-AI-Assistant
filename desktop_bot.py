@@ -34,6 +34,7 @@ class FloatingStudyBot(ctk.CTk):
         self.setup_ui()
 
     def setup_ui(self):
+        """Initializes and arranges the graphical user interface elements for the study bot."""
         # --- Header ---
         self.header = ctk.CTkFrame(self, height=60, corner_radius=0, fg_color="#1E293B")
         self.header.pack(fill="x", side="top")
