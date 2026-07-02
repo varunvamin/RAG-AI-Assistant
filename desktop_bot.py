@@ -130,6 +130,7 @@ class FloatingStudyBot(ctk.CTk):
         thread.start()
 
     def get_ai_response(self, query):
+        """Fetches the response from the AI model in a background thread and updates the UI."""
         try:
             answer, sources = ask_question(self.rag_chain, query, self.chat_history)
             self.chat_history.append({"role": "user", "content": query})
