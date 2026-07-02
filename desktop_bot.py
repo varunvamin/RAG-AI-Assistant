@@ -113,6 +113,7 @@ class FloatingStudyBot(ctk.CTk):
         self.log(f"I've analyzed '{filename}'. I'm ready for your questions!")
 
     def send_message(self):
+        """Processes user input from the entry field and triggers the AI response generation."""
         query = self.user_input.get().strip()
         if not query or self.is_processing:
             return
