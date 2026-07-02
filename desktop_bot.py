@@ -107,6 +107,7 @@ class FloatingStudyBot(ctk.CTk):
             self.after(0, lambda: self.upload_btn.configure(state="normal"))
 
     def on_processing_complete(self, chunks_count, page_count, filename):
+        """Updates the UI to reflect that the PDF has been successfully processed."""
         self.status_label.configure(text=f"📖 Loaded: {filename} ({page_count} pgs)", text_color="#4ADE80")
         self.upload_btn.configure(state="normal")
         self.log(f"I've analyzed '{filename}'. I'm ready for your questions!")
